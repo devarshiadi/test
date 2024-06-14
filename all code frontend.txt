@@ -1,0 +1,6091 @@
+
+// here frontend i only added which we really want for products
+// path :- frontend\src\Redux\Actions\cartAction.js
+import axios from "axios";
+import { ADD_TO_CART, REMOVE_CART_ITEM } from "../Constants/cartConstants";
+
+export const addToCartAction = (id, quantity) => async (dispatch, getState) => {
+  const { data } = await axios.get(`/api/product/getSingleProduct/${id}`);
+  //console.log("CART ACTION CALL");
+  dispatch({
+    type: ADD_TO_CART,
+    payload: {
+      id: data.product._id,
+      name: data.product.name,
+      rate: data.product.rate,
+      stocks: data.product.stocks,
+      kilogramOption: data.product.kilogramOption,
+      image: data.product.url,
+      quantity,
+    },
+  });
+  localStorage.setItem(
+    "userCart",
+    JSON.stringify(getState().userCart.cartItems)
+  );
+};
+
+export const removeCartItemAction = (id) => (dispatch, getState) => {
+  dispatch({ type: REMOVE_CART_ITEM, payload: id });
+  localStorage.setItem(
+    "userCart",
+    JSON.stringify(getState().userCart.cartItems)
+  );
+};
+
+
+// path :- frontend\src\Redux\Actions\categoryAction.js
+import {
+  ADD_CATEGORY_FAIL,
+  ADD_CATEGORY_REQUEST,
+  ADD_CATEGORY_SUCCESS,
+  CLEAR_ERRORS,
+  DELETE_CATEGORY_FAIL,
+  DELETE_CATEGORY_REQUEST,
+  DELETE_CATEGORY_SUCCESS,
+  GET_CATEGORY_FAIL,
+  GET_CATEGORY_REQUEST,
+  GET_CATEGORY_SUCCESS,
+  UPDATE_CATEGORY_FAIL,
+  UPDATE_CATEGORY_REQUEST,
+  UPDATE_CATEGORY_SUCCESS,
+} from "../Constants/categoryConstants";
+import axios from "axios";
+
+export const addCategoryAction = (categoryData) => async (dispatch) => {
+  try {
+    dispatch({ type: ADD_CATEGORY_REQUEST });
+    const { data } = await axios.post("/api/category/add", categoryData);
+    dispatch({ type: ADD_CATEGORY_SUCCESS, payload: data });
+  } catch (error) {
+    // console.log(error);
+    dispatch({ type: ADD_CATEGORY_FAIL, error: error.response.data.message });
+  }
+};
+
+export const getAllCategoryAction = () => async (dispatch) => {
+  try {
+    dispatch({ type: GET_CATEGORY_REQUEST });
+    const { data } = await axios.get("/api/category/get");
+    dispatch({ type: GET_CATEGORY_SUCCESS, payload: data });
+  } catch (error) {
+    // console.log(error);
+    dispatch({ type: GET_CATEGORY_FAIL, error: error.response.data.message });
+  }
+};
+
+//Delete Category
+export const deleteCategoryAction = (categoryId) => async (dispatch) => {
+  try {
+    dispatch({ type: DELETE_CATEGORY_REQUEST });
+    const { data } = await axios.delete(`/api/category/delete/${categoryId}`);
+    dispatch({ type: DELETE_CATEGORY_SUCCESS, payload: data });
+  } catch (error) {
+    dispatch({
+      type: DELETE_CATEGORY_FAIL,
+      error: error.response.data.message,
+    });
+  }
+};
+
+//Update Category
+export const updateCategoryAction =
+  (categoryId, updateFormData) => async (dispatch) => {
+    try {
+      dispatch({ type: UPDATE_CATEGORY_REQUEST });
+      const { data } = await axios.put(
+        `/api/category/update/${categoryId}`,
+        updateFormData
+      );
+      dispatch({ type: UPDATE_CATEGORY_SUCCESS, payload: data });
+    } catch (error) {
+      // console.log(error);
+      dispatch({
+        type: UPDATE_CATEGORY_FAIL,
+        error: error.response.data.message,
+      });
+    }
+  };
+
+export const clearError = () => async (dispatch) => {
+  dispatch({ type: CLEAR_ERRORS });
+};
+
+
+// path :- frontend\src\Redux\Actions\orderAction.js
+import axios from "axios";
+import {
+  GET_ALL_ORDERS_ADMIN_FAIL,
+  GET_ALL_ORDERS_ADMIN_REQUEST,
+  GET_ALL_ORDERS_ADMIN_SUCCESS,
+  GET_USER_ORDERS_DETAILS_FAIL,
+  GET_USER_ORDERS_DETAILS_REQUEST,
+  GET_USER_ORDERS_DETAILS_SUCCESS,
+  GET_USER_ORDERS_FAIL,
+  GET_USER_ORDERS_REQUEST,
+  GET_USER_ORDERS_SUCCESS,
+  UPDATE_ORDER_ADMIN_FAIL,
+  UPDATE_ORDER_ADMIN_REQUEST,
+  UPDATE_ORDER_ADMIN_SUCCESS,
+} from "../Constants/orderConstants";
+
+export const getUsersOrdersAction = (userId) => async (dispatch) => {
+  try {
+    dispatch({ type: GET_USER_ORDERS_REQUEST });
+    const { data } = await axios.get("/api/user/my/orders");
+    dispatch({ type: GET_USER_ORDERS_SUCCESS, payload: data });
+  } catch (error) {
+    dispatch({
+      type: GET_USER_ORDERS_FAIL,
+      error: error.response.data.message,
+    });
+    // console.log(error);
+  }
+};
+
+export const getUsersOrderDetailsAction = (orderId) => async (dispatch) => {
+  try {
+    dispatch({ type: GET_USER_ORDERS_DETAILS_REQUEST });
+    const { data } = await axios.get(`/api/user/my/order/${orderId}`);
+    dispatch({ type: GET_USER_ORDERS_DETAILS_SUCCESS, payload: data });
+  } catch (error) {
+    dispatch({
+      type: GET_USER_ORDERS_DETAILS_FAIL,
+      error: error.response.data.message,
+    });
+    // console.log(error);
+  }
+};
+
+export const getAllOrdersAdminAction = () => async (dispatch) => {
+  try {
+    dispatch({ type: GET_ALL_ORDERS_ADMIN_REQUEST });
+    const { data } = await axios.get("/api/user/admin/orders");
+    dispatch({ type: GET_ALL_ORDERS_ADMIN_SUCCESS, payload: data });
+  } catch (error) {
+    dispatch({
+      type: GET_ALL_ORDERS_ADMIN_FAIL,
+      error: error.data.response.message,
+    });
+  }
+};
+
+export const updateOrdersAdminAction =
+  (orderId, oStatus) => async (dispatch) => {
+    try {
+      dispatch({ type: UPDATE_ORDER_ADMIN_REQUEST });
+      const { data } = await axios.put(`/api/user/update/order/${orderId}`, {
+        oStatus,
+      });
+      dispatch({ type: UPDATE_ORDER_ADMIN_SUCCESS, payload: data });
+    } catch (error) {
+      dispatch({
+        type: UPDATE_ORDER_ADMIN_FAIL,
+        error: error.data.response.message,
+      });
+    }
+  };
+
+
+// path :- frontend\src\Redux\Actions\productAction.js
+import {
+  ADD_PRODUCT_FAIL,
+  ADD_PRODUCT_REQUEST,
+  ADD_PRODUCT_SUCCESS,
+  CLEAR_ERRORS,
+  DELETE_PRODUCT_FAIL,
+  DELETE_PRODUCT_REQUEST,
+  DELETE_PRODUCT_SUCCESS,
+  GET_ALL_PRODUCTS_FAIL,
+  GET_ALL_PRODUCTS_REQUEST,
+  GET_ALL_PRODUCTS_SUCCESS,
+  GET_SINGLE_PRODUCT_FAIL,
+  GET_SINGLE_PRODUCT_REQUEST,
+  GET_SINGLE_PRODUCT_SUCCESS,
+  UPDATE_PRODUCT_FAIL,
+  UPDATE_PRODUCT_REQUEST,
+  UPDATE_PRODUCT_SUCCESS,
+} from "../Constants/productConstants";
+import axios from "axios";
+
+//Add Products
+export const AddProductsAction = (formData) => async (dispatch) => {
+  try {
+    dispatch({ type: ADD_PRODUCT_REQUEST });
+    const { data } = await axios.post("/api/product/add", formData);
+    dispatch({ type: ADD_PRODUCT_SUCCESS, payload: data });
+  } catch (error) {
+    dispatch({ type: ADD_PRODUCT_FAIL, error: error.response.data.message });
+  }
+};
+
+//Get All Products
+export const getAllProductsAction =
+  (price = "0-1000", filterCategory, keyword = "") =>
+  async (dispatch) => {
+    try {
+      dispatch({ type: GET_ALL_PRODUCTS_REQUEST });
+      let UrlLink;
+      if (keyword != "") {
+        UrlLink = `/api/product/getAllProducts?keyword=${keyword}`;
+      } else if (filterCategory && price) {
+        const gte = price.split("-")[0];
+        const lte = price.split("-")[1];
+        UrlLink = `/api/product/getAllProducts?category=${filterCategory}&gte=${gte}&lte=${lte}`;
+      } else {
+        UrlLink = "/api/product/getAllProducts";
+      }
+      const { data } = await axios.get(UrlLink);
+      dispatch({ type: GET_ALL_PRODUCTS_SUCCESS, payload: data });
+    } catch (error) {
+      dispatch({
+        type: GET_ALL_PRODUCTS_FAIL,
+        error: error.response.data.message,
+      });
+    }
+  };
+
+export const deleteProductAction = (productId) => async (dispatch) => {
+  try {
+    dispatch({ type: DELETE_PRODUCT_REQUEST });
+    const { data } = await axios.delete(`/api/product/delete/${productId}`);
+    dispatch({ type: DELETE_PRODUCT_SUCCESS, payload: data });
+  } catch (error) {
+    dispatch({ type: DELETE_PRODUCT_FAIL, error: error.response.data.message });
+  }
+};
+
+export const getSingleProductAction = (productId) => async (dispatch) => {
+  try {
+    dispatch({ type: GET_SINGLE_PRODUCT_REQUEST });
+    const { data } = await axios.get(
+      `/api/product/getSingleProduct/${productId}`
+    );
+    dispatch({ type: GET_SINGLE_PRODUCT_SUCCESS, payload: data });
+  } catch (error) {
+    dispatch({
+      type: GET_SINGLE_PRODUCT_FAIL,
+      error: error.response.data.message,
+    });
+  }
+};
+
+//Update Product
+export const updateProductAction =
+  (productId, updateFormData) => async (dispatch) => {
+    try {
+      dispatch({ type: UPDATE_PRODUCT_REQUEST });
+      const { data } = await axios.put(
+        `/api/product/update/${productId}`,
+        updateFormData
+      );
+      dispatch({ type: UPDATE_PRODUCT_SUCCESS, payload: data });
+    } catch (error) {
+      // console.log(error);
+      dispatch({
+        type: UPDATE_PRODUCT_FAIL,
+        error: error.response.data.message,
+      });
+    }
+  };
+
+export const clearError = () => async (dispatch) => {
+  dispatch({ type: CLEAR_ERRORS });
+};
+
+
+// path :- frontend\src\Redux\Actions\reviewsAction.js
+import axios from "axios";
+import {
+  CLEAR_ERRORS,
+  DELETE_REVIEWS_REQUEST,
+  DELETE_REVIEWS_REVIEWS_FAIL,
+  DELETE_REVIEWS_REVIEWS_SUCCESS,
+  GET_ALL_ADMIN_REVIEWS_FAIL,
+  GET_ALL_ADMIN_REVIEWS_REQUEST,
+  GET_ALL_ADMIN_REVIEWS_SUCCESS,
+  GET_ALL_REVIEWS_FAIL,
+  GET_ALL_REVIEWS_REQUEST,
+  GET_ALL_REVIEWS_SUCCESS,
+} from "../Constants/reviewsConstants";
+
+export const getAllReviewsAction = () => async (dispatch) => {
+  try {
+    dispatch({ type: GET_ALL_REVIEWS_REQUEST });
+    const { data } = await axios.get("/api/user/get/reviews");
+    dispatch({ type: GET_ALL_REVIEWS_SUCCESS, payload: data });
+  } catch (error) {
+    dispatch({
+      type: GET_ALL_REVIEWS_FAIL,
+      error: error.response.data.message,
+    });
+  }
+};
+
+export const getAllAdminReviewsAction = () => async (dispatch) => {
+  try {
+    dispatch({ type: GET_ALL_ADMIN_REVIEWS_REQUEST });
+    const { data } = await axios.get("/api/user/get/reviews");
+    dispatch({ type: GET_ALL_ADMIN_REVIEWS_SUCCESS, payload: data });
+  } catch (error) {
+    dispatch({
+      type: GET_ALL_ADMIN_REVIEWS_FAIL,
+      error: error.response.data.message,
+    });
+  }
+};
+
+export const deleteReviewsAction = (reviewId) => async (dispatch) => {
+  try {
+    dispatch({ type: DELETE_REVIEWS_REQUEST });
+    const { data } = await axios.delete(`/api/user/admin/review/${reviewId}`);
+    dispatch({ type: DELETE_REVIEWS_REVIEWS_SUCCESS, payload: data });
+  } catch (error) {
+    dispatch({
+      type: DELETE_REVIEWS_REVIEWS_FAIL,
+      error: error.response.data.message,
+    });
+  }
+};
+
+export const clearError = () => async (dispatch) => {
+  dispatch({ type: CLEAR_ERRORS });
+};
+
+
+// path :- frontend\src\Redux\Actions\userAction.js
+
+import {
+  USER_REGISTER_REQUEST,
+  USER_REGISTER_SUCCESS,
+  USER_REGISTER_FAIL,
+  CLEAR_ERROR,
+  USER_LOGIN_REQUEST,
+  USER_LOGIN_SUCCESS,
+  USER_LOGIN_FAIL,
+  LOAD_LOGIN_USER_REQUEST,
+  LOAD_LOGIN_USER_FAIL,
+  LOAD_LOGIN_USER_SUCCESS,
+  LOGOUT_USER_REQUEST,
+  LOGOUT_USER_SUCCESS,
+  LOGOUT_USER_FAIL,
+  USER_PASSWORD_UPDATE_REQUEST,
+  USER_PASSWORD_UPDATE_SUCCESS,
+  USER_PASSWORD_UPDATE_FAIL,
+  SEND_PASSWORD_REST_EMAIL_REQUEST,
+  SEND_PASSWORD_REST_EMAIL_SUCCESS,
+  SEND_PASSWORD_REST_EMAIL_FAIL,
+  USER_PASSWORD_REST_REQUEST,
+  USER_PASSWORD_REST_SUCCESS,
+  USER_PASSWORD_REST_FAIL,
+  GET_ALL_USERS_REQUEST,
+  GET_ALL_USERS_SUCCESS,
+  GET_ALL_USERS_FAIL,
+  DELETE_USER_REQUEST,
+  DELETE_USER_SUCCESS,
+  DELETE_USER_FAIL,
+  UPDATE_USER_ROLE_REQUEST,
+  UPDATE_USER_ROLE_SUCCESS,
+  UPDATE_USER_ROLE_FAIL,
+} from "../Constants/userConstants";
+
+import axios from "axios";
+
+export const userRegisterAction = (userData) => async (dispatch) => {
+  try {
+    dispatch({ type: USER_REGISTER_REQUEST });
+    const { data } = await axios.post("api/user/register", userData);
+    dispatch({ type: USER_REGISTER_SUCCESS, payload: data });
+  } catch (error) {
+    dispatch({ type: USER_REGISTER_FAIL, error: error.response.data.message });
+  }
+};
+
+export const userLoginAction = (userData) => async (dispatch) => {
+  try {
+    dispatch({ type: USER_LOGIN_REQUEST });
+    const config = { headers: { "Content-Type": "application/json" } };
+    const { data } = await axios.post("/api/user/login", userData);
+    dispatch({ type: USER_LOGIN_SUCCESS, payload: data });
+  } catch (error) {
+    dispatch({ type: USER_LOGIN_FAIL, error: error.response.data.message });
+  }
+};
+
+export const loadUserAction = () => async (dispatch) => {
+  try {
+    dispatch({ type: LOAD_LOGIN_USER_REQUEST });
+    const { data } = await axios.get("/api/user/getloggeduser");
+    dispatch({
+      type: LOAD_LOGIN_USER_SUCCESS,
+      payload: data,
+    });
+  } catch (error) {
+    dispatch({
+      type: LOAD_LOGIN_USER_FAIL,
+      error: error.response.data.message,
+    });
+  }
+};
+
+export const logOutUserAction = () => async (dispatch) => {
+  try {
+    dispatch({ type: LOGOUT_USER_REQUEST });
+    const { data } = await axios.get("/api/user/logOut");
+    dispatch({ type: LOGOUT_USER_SUCCESS, payload: data });
+  } catch (error) {
+    dispatch({ type: LOGOUT_USER_FAIL, error: error.response.data.message });
+  }
+};
+
+export const userPasswordUpdateAction = (userData) => async (dispatch) => {
+  try {
+    dispatch({ type: USER_PASSWORD_UPDATE_REQUEST });
+    const { data } = await axios.put("/api/user/changePassword", userData);
+    dispatch({ type: USER_PASSWORD_UPDATE_SUCCESS, payload: data });
+  } catch (error) {
+    dispatch({
+      type: USER_PASSWORD_UPDATE_FAIL,
+      error: error.response.data.message,
+    });
+  }
+};
+
+export const restPasswordSendEmailAction = (email) => async (dispatch) => {
+  try {
+    dispatch({ type: SEND_PASSWORD_REST_EMAIL_REQUEST });
+    const { data } = await axios.post("/api/user/send-reset-password-email", {
+      email,
+    });
+    dispatch({ type: SEND_PASSWORD_REST_EMAIL_SUCCESS, payload: data });
+  } catch (error) {
+    dispatch({
+      type: SEND_PASSWORD_REST_EMAIL_FAIL,
+      error: error.response.data.message,
+    });
+  }
+};
+
+export const restPasswordAction =
+  (id, token, password, confirm_password) => async (dispatch) => {
+    try {
+      dispatch({ type: USER_PASSWORD_REST_REQUEST });
+      const { data } = await axios.post(
+        `/api/user/reset-password/${id}/${token}`,
+        {
+          password,
+          confirm_password,
+        }
+      );
+      dispatch({ type: USER_PASSWORD_REST_SUCCESS, payload: data });
+    } catch (error) {
+      dispatch({
+        type: USER_PASSWORD_REST_FAIL,
+        error: error.response.data.message,
+      });
+    }
+  };
+
+export const getAllUsersAdminAction = () => async (dispatch) => {
+  try {
+    dispatch({ type: GET_ALL_USERS_REQUEST });
+    const { data } = await axios.get("/api/user/admin/user");
+    dispatch({ type: GET_ALL_USERS_SUCCESS, payload: data });
+  } catch (error) {
+    dispatch({
+      type: GET_ALL_USERS_FAIL,
+      error: error.response.data.message,
+    });
+  }
+};
+
+export const deleteUserAdminAction = (userId) => async (dispatch) => {
+  try {
+    dispatch({ type: DELETE_USER_REQUEST });
+    const { data } = await axios.delete(`/api/user/admin/user/${userId}`);
+    dispatch({ type: DELETE_USER_SUCCESS, payload: data });
+  } catch (error) {
+    dispatch({ type: DELETE_USER_FAIL, error: error.response.data.message });
+  }
+};
+
+export const adminUpdateUserAction = (userId, UserRole) => async (dispatch) => {
+  try {
+    dispatch({ type: UPDATE_USER_ROLE_REQUEST });
+    const { data } = await axios.put(`/api/user/admin/user/${userId}`, {
+      UserRole,
+    });
+    dispatch({ type: UPDATE_USER_ROLE_SUCCESS, payload: data });
+  } catch (error) {
+    // console.log(error.response.data.message);
+    dispatch({
+      type: UPDATE_USER_ROLE_FAIL,
+      error: error.response.data.message,
+    });
+  }
+};
+
+export const clearError = () => async (dispatch) => {
+  dispatch({ type: CLEAR_ERROR });
+};
+
+
+// path :- frontend\src\Redux\Constants\cartConstants.js
+export const ADD_TO_CART = "ADD_TO_CART";
+export const REMOVE_CART_ITEM = "REMOVE_CART_ITEM";
+export const CLEAR_CART_ITEM = "CLEAR_CART_ITEM";
+
+export const SAVE_SHIPPING_INFO = "SAVE_SHIPPING_INFO";
+export const CLEAR_ERRORS = "CLEAR_ERRORS";
+
+// path :- frontend\src\Redux\Constants\categoryConstants.js
+export const ADD_CATEGORY_REQUEST = "ADD_CATEGORY_REQUEST";
+export const ADD_CATEGORY_SUCCESS = "ADD_CATEGORY_SUCCESS";
+export const ADD_CATEGORY_FAIL = "ADD_CATEGORY_FAIL";
+
+export const GET_CATEGORY_REQUEST = "GET_CATEGORY_REQUEST";
+export const GET_CATEGORY_SUCCESS = "GET_CATEGORY_SUCCESS";
+export const GET_CATEGORY_FAIL = "GET_CATEGORY_FAIL";
+
+export const DELETE_CATEGORY_REQUEST = "DELETE_CATEGORY_REQUEST";
+export const DELETE_CATEGORY_SUCCESS = "DELETE_CATEGORY_SUCCESS";
+export const DELETE_CATEGORY_FAIL = "DELETE_CATEGORY_FAIL";
+
+export const UPDATE_CATEGORY_REQUEST = "UPDATE_CATEGORY_REQUEST";
+export const UPDATE_CATEGORY_SUCCESS = "UPDATE_CATEGORY_SUCCESS";
+export const UPDATE_CATEGORY_FAIL = "UPDATE_CATEGORY_FAIL";
+
+export const CLEAR_ERRORS = "CLEAR_ERRORS";
+
+// path :- frontend\src\Redux\Constants\orderConstants.js
+export const GET_USER_ORDERS_REQUEST = "GET_USER_ORDERS_REQUEST ";
+export const GET_USER_ORDERS_SUCCESS = "GET_USER_ORDERS_SUCCESS ";
+export const GET_USER_ORDERS_FAIL = "GET_USER_ORDERS_FAIL ";
+
+export const GET_USER_ORDERS_DETAILS_REQUEST =
+  "GET_USER_ORDERS_DETAILS_REQUEST ";
+export const GET_USER_ORDERS_DETAILS_SUCCESS =
+  "GET_USER_ORDERS_DETAILS_SUCCESS ";
+export const GET_USER_ORDERS_DETAILS_FAIL = "GET_USER_ORDERS_DETAILS_FAIL ";
+
+export const GET_ALL_ORDERS_ADMIN_REQUEST = "GET_ALL_ORDERS_ADMIN_REQUEST";
+export const GET_ALL_ORDERS_ADMIN_SUCCESS = "GET_ALL_ORDERS_ADMIN_SUCCESS";
+export const GET_ALL_ORDERS_ADMIN_FAIL = "GET_ALL_ORDERS_ADMIN_FAIL";
+
+export const UPDATE_ORDER_ADMIN_REQUEST = "UPDATE_ORDER_ADMIN_REQUEST";
+export const UPDATE_ORDER_ADMIN_SUCCESS = "UPDATE_ORDER_ADMIN_SUCCESS";
+export const UPDATE_ORDER_ADMIN_FAIL = "UPDATE_ORDER_ADMIN_FAIL";
+
+export const CLEAR_ERRORS = "CLEAR_ERRORS";
+
+
+// path :- frontend\src\Redux\Constants\productConstants.js
+export const GET_ALL_PRODUCTS_REQUEST = "GET_ALL_PRODUCTS_REQUEST";
+export const GET_ALL_PRODUCTS_SUCCESS = "GET_ALL_PRODUCTS_SUCCESS";
+export const GET_ALL_PRODUCTS_FAIL = "GET_ALL_PRODUCTS_FAIL";
+
+export const ADD_PRODUCT_REQUEST = "ADD_PRODUCT_REQUEST";
+export const ADD_PRODUCT_SUCCESS = "ADD_PRODUCT_SUCCESS";
+export const ADD_PRODUCT_FAIL = "ADD_PRODUCT_FAIL";
+
+export const DELETE_PRODUCT_REQUEST = "DELETE_PRODUCT_REQUEST";
+export const DELETE_PRODUCT_SUCCESS = "DELETE_PRODUCT_SUCCESS";
+export const DELETE_PRODUCT_FAIL = "DELETE_PRODUCT_FAIL";
+
+export const GET_SINGLE_PRODUCT_REQUEST = " GET_SINGLE_PRODUCT_REQUEST";
+export const GET_SINGLE_PRODUCT_SUCCESS = " GET_SINGLE_PRODUCT_SUCCESS";
+export const GET_SINGLE_PRODUCT_FAIL = " GET_SINGLE_PRODUCT_FAIL";
+
+export const UPDATE_PRODUCT_REQUEST = "UPDATE_PRODUCT_REQUEST ";
+export const UPDATE_PRODUCT_SUCCESS = "UPDATE_PRODUCT_SUCCESS";
+export const UPDATE_PRODUCT_FAIL = "UPDATE_PRODUCT_FAIL";
+
+export const CLEAR_ERRORS = "CLEAR_ERRORS";
+
+
+// path :- frontend\src\Redux\Constants\reviewsConstants.js
+export const GET_ALL_REVIEWS_REQUEST = "GET_ALL_REVIEWS_REQUEST";
+export const GET_ALL_REVIEWS_SUCCESS = "GET_ALL_REVIEWS_SUCCESS";
+export const GET_ALL_REVIEWS_FAIL = "GET_ALL_REVIEWS_FAIL";
+
+export const GET_ALL_ADMIN_REVIEWS_REQUEST = "GET_ALL_ADMIN_REVIEWS_REQUEST";
+export const GET_ALL_ADMIN_REVIEWS_SUCCESS = "GET_ALL_ADMIN_REVIEWS_SUCCESS";
+export const GET_ALL_ADMIN_REVIEWS_FAIL = "GET_ALL_ADMIN_REVIEWS_FAIL";
+
+export const DELETE_REVIEWS_REQUEST = "DELETE_REVIEWS_REQUEST";
+export const DELETE_REVIEWS_REVIEWS_SUCCESS = "DELETE_REVIEWS_SUCCESS";
+export const DELETE_REVIEWS_REVIEWS_FAIL = "DELETE_REVIEWS_FAIL";
+
+export const CLEAR_ERRORS = "CLEAR_ERRORS";
+
+
+// path :- frontend\src\Redux\Constants\userConstants.js
+export const USER_REGISTER_REQUEST = "USER_REGISTER_REQUEST";
+export const USER_REGISTER_SUCCESS = "USER_REGISTER_SUCCESS";
+export const USER_REGISTER_FAIL = "USER_REGISTER_FAIL";
+
+export const USER_LOGIN_REQUEST = "USER_LOGIN_REQUEST";
+export const USER_LOGIN_SUCCESS = "USER_LOGIN_SUCCESS";
+export const USER_LOGIN_FAIL = "USER_LOGIN_FAIL";
+
+export const LOAD_LOGIN_USER_REQUEST = "LOAD_LOGIN_USER_REQUEST";
+export const LOAD_LOGIN_USER_SUCCESS = "LOAD_LOGIN_USER_SUCCESS";
+export const LOAD_LOGIN_USER_FAIL = "LOAD_LOGIN_USER_FAIL";
+
+export const LOGOUT_USER_REQUEST = "LOGOUT_USER_REQUEST";
+export const LOGOUT_USER_SUCCESS = "LOGOUT_USER_SUCCESS";
+export const LOGOUT_USER_FAIL = "LOGOUT_USER_FAIL";
+
+export const USER_PASSWORD_UPDATE_REQUEST = "USER_PASSWORD_UPDATE_REQUEST";
+export const USER_PASSWORD_UPDATE_SUCCESS = "USER_PASSWORD_UPDATE_SUCCESS";
+export const USER_PASSWORD_UPDATE_FAIL = "USER_PASSWORD_UPDATE_FAIL";
+
+export const SEND_PASSWORD_REST_EMAIL_REQUEST =
+  "SEND_PASSWORD_REST_EMAIL_REQUEST";
+export const SEND_PASSWORD_REST_EMAIL_SUCCESS =
+  "SEND_PASSWORD_REST_EMAIL_SUCCESS";
+export const SEND_PASSWORD_REST_EMAIL_FAIL = "SEND_PASSWORD_REST_EMAIL_FAIL";
+
+export const USER_PASSWORD_REST_REQUEST = "USER_PASSWORD_REST_REQUEST";
+export const USER_PASSWORD_REST_SUCCESS = "USER_PASSWORD_REST_SUCCESS";
+export const USER_PASSWORD_REST_FAIL = "USER_PASSWORD_REST_FAIL";
+
+export const GET_ALL_USERS_REQUEST = "GET_ALL_USERS_REQUEST";
+export const GET_ALL_USERS_SUCCESS = "GET_ALL_USERS_SUCCESS";
+export const GET_ALL_USERS_FAIL = "GET_ALL_USERS_FAIL";
+
+export const DELETE_USER_REQUEST = "DELETE_USER_REQUEST";
+export const DELETE_USER_SUCCESS = "DELETE_USER_SUCCESS";
+export const DELETE_USER_FAIL = "DELETE_USER_FAIL";
+
+export const UPDATE_USER_ROLE_REQUEST = "UPDATE_USER_ROLE_REQUEST";
+export const UPDATE_USER_ROLE_SUCCESS = "UPDATE_USER_ROLE_SUCCESS";
+export const UPDATE_USER_ROLE_FAIL = "UPDATE_USER_ROLE_FAIL";
+
+export const CLEAR_ERROR = "CLEAR_ERROR";
+
+// path :- frontend\src\Redux\Reducers\cartReducer.js
+import {
+  ADD_TO_CART,
+  CLEAR_CART_ITEM,
+  REMOVE_CART_ITEM,
+} from "../Constants/cartConstants";
+
+export const myCartProductReducer = (state = { cartItems: [] }, action) => {
+  switch (action.type) {
+    case ADD_TO_CART:
+      const isItemInCart = state.cartItems.find((item) => {
+        return item.id === action.payload.id;
+      });
+      if (isItemInCart) {
+        state.cartItems.map((item) => {
+          if (item.id === action.payload.id) {
+            item.quantity = action.payload.quantity;
+          }
+        });
+        return {
+          ...state,
+        };
+      } else {
+        state.cartItems.push(action.payload);
+        return {
+          ...state,
+        };
+      }
+
+    case REMOVE_CART_ITEM:
+      return {
+        ...state,
+        cartItems: [
+          ...state.cartItems.filter((item) => item.id !== action.payload),
+        ],
+      };
+
+    case CLEAR_CART_ITEM:
+      return {
+        cartItems: [],
+      };
+
+    default:
+      return state;
+  }
+};
+
+// path :- frontend\src\Redux\Reducers\categoryReducer.js
+import {
+  ADD_CATEGORY_FAIL,
+  ADD_CATEGORY_REQUEST,
+  ADD_CATEGORY_SUCCESS,
+  CLEAR_ERRORS,
+  DELETE_CATEGORY_FAIL,
+  DELETE_CATEGORY_REQUEST,
+  DELETE_CATEGORY_SUCCESS,
+  GET_CATEGORY_FAIL,
+  GET_CATEGORY_REQUEST,
+  GET_CATEGORY_SUCCESS,
+  UPDATE_CATEGORY_FAIL,
+  UPDATE_CATEGORY_REQUEST,
+  UPDATE_CATEGORY_SUCCESS,
+} from "../Constants/categoryConstants";
+
+export const addCategoryReducer = (state = {}, action) => {
+  switch (action.type) {
+    case ADD_CATEGORY_REQUEST:
+      return { loading: true };
+    case ADD_CATEGORY_SUCCESS:
+      return {
+        loading: false,
+        newCategory: action.payload.newCategory,
+        success: action.payload.success,
+        message: action.payload.message,
+      };
+    case ADD_CATEGORY_FAIL:
+      return {
+        loading: false,
+        error: action.error,
+      };
+    case CLEAR_ERRORS:
+      return {
+        ...state,
+        error: null,
+      };
+    default:
+      return state;
+  }
+};
+
+export const getCategoryReducer = (state = {}, action) => {
+  switch (action.type) {
+    case GET_CATEGORY_REQUEST:
+      return { loading: true };
+    case GET_CATEGORY_SUCCESS:
+      return {
+        loading: false,
+        Categories: action.payload.Categories,
+        success: action.payload.success,
+        message: action.payload.message,
+      };
+    case GET_CATEGORY_FAIL:
+      return {
+        loading: false,
+        error: action.error,
+      };
+    case CLEAR_ERRORS:
+      return {
+        ...state,
+        error: null,
+      };
+    default:
+      return state;
+  }
+};
+
+export const deleteCategoryReducer = (state = {}, action) => {
+  switch (action.type) {
+    case DELETE_CATEGORY_REQUEST:
+      return { loading: true };
+    case DELETE_CATEGORY_SUCCESS:
+      return {
+        loading: false,
+        DeletedCategory: action.payload.DeletedCategory,
+        success: action.payload.success,
+        message: action.payload.message,
+      };
+    case DELETE_CATEGORY_FAIL:
+      return {
+        loading: false,
+        error: action.error,
+      };
+    case CLEAR_ERRORS:
+      return {
+        ...state,
+        error: null,
+      };
+    default:
+      return state;
+  }
+};
+
+export const updateCategoryReducer = (state = {}, action) => {
+  switch (action.type) {
+    case UPDATE_CATEGORY_REQUEST:
+      return { loading: true };
+    case UPDATE_CATEGORY_SUCCESS:
+      return {
+        loading: false,
+        success: action.payload.success,
+        message: action.payload.message,
+      };
+    case UPDATE_CATEGORY_FAIL:
+      return {
+        loading: false,
+        error: action.error,
+      };
+    case CLEAR_ERRORS:
+      return {
+        ...state,
+        error: null,
+      };
+    default:
+      return state;
+  }
+};
+
+// path :- frontend\src\Redux\Reducers\ordersReducer.js
+import {
+  GET_USER_ORDERS_FAIL,
+  GET_USER_ORDERS_REQUEST,
+  GET_USER_ORDERS_SUCCESS,
+  CLEAR_ERRORS,
+  GET_USER_ORDERS_DETAILS_REQUEST,
+  GET_USER_ORDERS_DETAILS_SUCCESS,
+  GET_USER_ORDERS_DETAILS_FAIL,
+  GET_ALL_ORDERS_ADMIN_REQUEST,
+  GET_ALL_ORDERS_ADMIN_SUCCESS,
+  GET_ALL_ORDERS_ADMIN_FAIL,
+  UPDATE_ORDER_ADMIN_REQUEST,
+  UPDATE_ORDER_ADMIN_SUCCESS,
+  UPDATE_ORDER_ADMIN_FAIL,
+} from "../Constants/orderConstants";
+
+//Get Order Reducer
+export const getUserOrderReducer = (state = { orders: [] }, action) => {
+  switch (action.type) {
+    case GET_USER_ORDERS_REQUEST:
+      return { loading: true };
+    case GET_USER_ORDERS_SUCCESS:
+      return {
+        loading: false,
+        orders: action.payload.myOrders,
+        success: action.payload.success,
+      };
+    case GET_USER_ORDERS_FAIL:
+      return {
+        loading: false,
+        error: action.error,
+      };
+    case CLEAR_ERRORS:
+      return {
+        ...state,
+        error: null,
+      };
+    default:
+      return state;
+  }
+};
+
+//Get OrderDetails Reducer
+export const getUserOrderDetailsReducer = (state = { order: {} }, action) => {
+  switch (action.type) {
+    case GET_USER_ORDERS_DETAILS_REQUEST:
+      return { loading: true };
+    case GET_USER_ORDERS_DETAILS_SUCCESS:
+      return {
+        loading: false,
+        order: action.payload.order,
+        success: action.payload.success,
+      };
+    case GET_USER_ORDERS_DETAILS_FAIL:
+      return {
+        loading: false,
+        error: action.error,
+      };
+    case CLEAR_ERRORS:
+      return {
+        ...state,
+        error: null,
+      };
+    default:
+      return state;
+  }
+};
+
+//get all orders for admin
+export const getAllOrdersAdminReducer = (state = { orders: [] }, action) => {
+  switch (action.type) {
+    case GET_ALL_ORDERS_ADMIN_REQUEST:
+      return {
+        loading: true,
+      };
+    case GET_ALL_ORDERS_ADMIN_SUCCESS:
+      return {
+        loading: false,
+        orders: action.payload.AllOrders,
+        success: action.payload.success,
+        ordersCounts: action.payload.ordersCounts,
+      };
+    case GET_ALL_ORDERS_ADMIN_FAIL:
+      return {
+        ...state,
+        loading: false,
+        error: action.payload.error,
+      };
+    case CLEAR_ERRORS:
+      return {
+        ...state,
+        error: null,
+      };
+    default:
+      return state;
+  }
+};
+
+//update orders for admin
+export const getUpdateOrderAdminReducer = (state = { order: [] }, action) => {
+  switch (action.type) {
+    case UPDATE_ORDER_ADMIN_REQUEST:
+      return {
+        loading: true,
+      };
+    case UPDATE_ORDER_ADMIN_SUCCESS:
+      return {
+        loading: false,
+        order: action.payload.Order,
+        success: action.payload.success,
+      };
+    case UPDATE_ORDER_ADMIN_FAIL:
+      return {
+        ...state,
+        loading: false,
+        error: action.payload.error,
+      };
+    case CLEAR_ERRORS:
+      return {
+        ...state,
+        error: null,
+      };
+    default:
+      return state;
+  }
+};
+
+// path :- frontend\src\Redux\Reducers\productReducer.js
+import {
+  CLEAR_ERRORS,
+  GET_ALL_PRODUCTS_FAIL,
+  GET_ALL_PRODUCTS_REQUEST,
+  GET_ALL_PRODUCTS_SUCCESS,
+  ADD_PRODUCT_REQUEST,
+  ADD_PRODUCT_SUCCESS,
+  ADD_PRODUCT_FAIL,
+  DELETE_PRODUCT_REQUEST,
+  DELETE_PRODUCT_SUCCESS,
+  DELETE_PRODUCT_FAIL,
+  GET_SINGLE_PRODUCT_REQUEST,
+  GET_SINGLE_PRODUCT_SUCCESS,
+  GET_SINGLE_PRODUCT_FAIL,
+  UPDATE_PRODUCT_REQUEST,
+  UPDATE_PRODUCT_SUCCESS,
+  UPDATE_PRODUCT_FAIL,
+} from "../Constants/productConstants";
+
+//Add Products Reducer
+export const addProductsReducer = (state = {}, action) => {
+  switch (action.type) {
+    case ADD_PRODUCT_REQUEST:
+      return { loading: true };
+    case ADD_PRODUCT_SUCCESS:
+      return {
+        loading: false,
+        Product: action.payload.newProduct,
+        success: action.payload.success,
+        message: action.payload.message,
+      };
+    case ADD_PRODUCT_FAIL:
+      return {
+        loading: false,
+        error: action.error,
+      };
+    case CLEAR_ERRORS:
+      return {
+        ...state,
+        error: null,
+      };
+    default:
+      return state;
+  }
+};
+
+//Get Products Reducer
+export const getAllProductsReducer = (state = { products: [] }, action) => {
+  switch (action.type) {
+    case GET_ALL_PRODUCTS_REQUEST:
+      return { loading: true };
+    case GET_ALL_PRODUCTS_SUCCESS:
+      return {
+        loading: false,
+        products: action.payload.products,
+        success: action.payload.success,
+        productsCount: action.payload.productsDocCount,
+      };
+    case GET_ALL_PRODUCTS_FAIL:
+      return {
+        loading: false,
+        error: action.error,
+      };
+    case CLEAR_ERRORS:
+      return {
+        ...state,
+        error: null,
+      };
+    default:
+      return state;
+  }
+};
+
+//get single product reducer
+export const getSingleProductReducer = (state = { product: {} }, action) => {
+  switch (action.type) {
+    case GET_SINGLE_PRODUCT_REQUEST:
+      return { loading: true };
+    case GET_SINGLE_PRODUCT_SUCCESS:
+      // console.log(action.payload.product);
+      return {
+        loading: false,
+        product: action.payload.product,
+        success: action.payload.success,
+      };
+    case GET_SINGLE_PRODUCT_FAIL:
+      return {
+        loading: false,
+        error: action.error,
+      };
+    case CLEAR_ERRORS:
+      return {
+        ...state,
+        error: null,
+      };
+    default:
+      return state;
+  }
+};
+
+export const deleteProductReducer = (state = {}, action) => {
+  switch (action.type) {
+    case DELETE_PRODUCT_REQUEST:
+      return { loading: true };
+    case DELETE_PRODUCT_SUCCESS:
+      return {
+        loading: false,
+        DeletedProduct: action.payload.DeletedProduct,
+        success: action.payload.success,
+        message: action.payload.message,
+      };
+    case DELETE_PRODUCT_FAIL:
+      return {
+        loading: false,
+        error: action.error,
+      };
+    case CLEAR_ERRORS:
+      return {
+        ...state,
+        error: null,
+      };
+    default:
+      return state;
+  }
+};
+
+export const updateProductReducer = (state = {}, action) => {
+  switch (action.type) {
+    case UPDATE_PRODUCT_REQUEST:
+      return { loading: true };
+    case UPDATE_PRODUCT_SUCCESS:
+      return {
+        loading: false,
+        success: action.payload.success,
+        message: action.payload.message,
+      };
+    case UPDATE_PRODUCT_FAIL:
+      return {
+        loading: false,
+        error: action.error,
+      };
+    case CLEAR_ERRORS:
+      return {
+        ...state,
+        error: null,
+      };
+    default:
+      return state;
+  }
+};
+
+// path :- frontend\src\Redux\Reducers\reviewsReducer.js
+import {
+  GET_ALL_REVIEWS_FAIL,
+  GET_ALL_REVIEWS_REQUEST,
+  GET_ALL_REVIEWS_SUCCESS,
+  CLEAR_ERRORS,
+  GET_ALL_ADMIN_REVIEWS_REQUEST,
+  GET_ALL_ADMIN_REVIEWS_SUCCESS,
+  GET_ALL_ADMIN_REVIEWS_FAIL,
+  DELETE_REVIEWS_REQUEST,
+  DELETE_REVIEWS_REVIEWS_SUCCESS,
+  DELETE_REVIEWS_REVIEWS_FAIL,
+} from "../Constants/reviewsConstants";
+
+//Get Reviews Reducer
+export const getAllReviewsReducer = (state = { reviews: [] }, action) => {
+  switch (action.type) {
+    case GET_ALL_REVIEWS_REQUEST:
+      return { loading: true };
+    case GET_ALL_REVIEWS_SUCCESS:
+      return {
+        loading: false,
+        reviews: action.payload.reviews,
+        success: action.payload.success,
+      };
+    case GET_ALL_REVIEWS_FAIL:
+      return {
+        loading: false,
+        error: action.error,
+      };
+    case CLEAR_ERRORS:
+      return {
+        ...state,
+        error: null,
+      };
+    default:
+      return state;
+  }
+};
+
+//Get Reviews Reducer for admin
+export const getAllAdminReviewsReducer = (state = { reviews: [] }, action) => {
+  switch (action.type) {
+    case GET_ALL_ADMIN_REVIEWS_REQUEST:
+      return { loading: true };
+    case GET_ALL_ADMIN_REVIEWS_SUCCESS:
+      return {
+        loading: false,
+        reviews: action.payload.reviews,
+        success: action.payload.success,
+      };
+    case GET_ALL_ADMIN_REVIEWS_FAIL:
+      return {
+        loading: false,
+        error: action.error,
+      };
+    case CLEAR_ERRORS:
+      return {
+        ...state,
+        error: null,
+      };
+    default:
+      return state;
+  }
+};
+
+//Delete Reviews Reducer
+export const deleteReviewsReducer = (state = {}, action) => {
+  switch (action.type) {
+    case DELETE_REVIEWS_REQUEST:
+      return { loading: true };
+    case DELETE_REVIEWS_REVIEWS_SUCCESS:
+      return {
+        loading: false,
+        success: action.payload.success,
+        message: action.payload.message,
+      };
+    case DELETE_REVIEWS_REVIEWS_FAIL:
+      return {
+        loading: false,
+        error: action.error,
+      };
+    case CLEAR_ERRORS:
+      return {
+        ...state,
+        error: null,
+      };
+    default:
+      return state;
+  }
+};
+
+// path :- frontend\src\Redux\Reducers\userReducer.js
+import {
+  USER_REGISTER_REQUEST,
+  USER_REGISTER_SUCCESS,
+  USER_REGISTER_FAIL,
+  CLEAR_ERROR,
+  USER_LOGIN_REQUEST,
+  USER_LOGIN_SUCCESS,
+  USER_LOGIN_FAIL,
+  LOAD_LOGIN_USER_REQUEST,
+  LOAD_LOGIN_USER_SUCCESS,
+  LOAD_LOGIN_USER_FAIL,
+  LOGOUT_USER_REQUEST,
+  LOGOUT_USER_SUCCESS,
+  LOGOUT_USER_FAIL,
+  USER_PASSWORD_UPDATE_REQUEST,
+  USER_PASSWORD_UPDATE_SUCCESS,
+  USER_PASSWORD_UPDATE_FAIL,
+  SEND_PASSWORD_REST_EMAIL_REQUEST,
+  SEND_PASSWORD_REST_EMAIL_SUCCESS,
+  SEND_PASSWORD_REST_EMAIL_FAIL,
+  USER_PASSWORD_REST_REQUEST,
+  USER_PASSWORD_REST_SUCCESS,
+  USER_PASSWORD_REST_FAIL,
+  GET_ALL_USERS_REQUEST,
+  GET_ALL_USERS_SUCCESS,
+  GET_ALL_USERS_FAIL,
+  DELETE_USER_REQUEST,
+  DELETE_USER_SUCCESS,
+  DELETE_USER_FAIL,
+  UPDATE_USER_ROLE_REQUEST,
+  UPDATE_USER_ROLE_SUCCESS,
+  UPDATE_USER_ROLE_FAIL,
+} from "../Constants/userConstants";
+
+export const registerReducer = (state = {}, action) => {
+  switch (action.type) {
+    case USER_REGISTER_REQUEST:
+      return {
+        loading: true,
+      };
+    case USER_REGISTER_SUCCESS:
+      return {
+        success: action.payload.success,
+        loading: false,
+      };
+    case USER_REGISTER_FAIL:
+      return {
+        error: action.error,
+        loading: false,
+      };
+    case CLEAR_ERROR:
+      return {
+        ...state,
+        error: null,
+      };
+    default:
+      return state;
+  }
+};
+
+export const loginReducer = (state = {}, action) => {
+  switch (action.type) {
+    case USER_LOGIN_REQUEST:
+    case LOAD_LOGIN_USER_REQUEST:
+      return {
+        loading: true,
+      };
+    case USER_LOGIN_SUCCESS:
+    case LOAD_LOGIN_USER_SUCCESS:
+      return {
+        user: action.payload.user,
+        success: action.payload.success,
+        loading: false,
+        isAuthUser: action.payload.success,
+      };
+    case USER_LOGIN_FAIL:
+    case LOAD_LOGIN_USER_FAIL:
+      return {
+        error: action.error,
+        loading: false,
+      };
+    case CLEAR_ERROR:
+      return {
+        ...state,
+        error: null,
+      };
+    default:
+      return state;
+  }
+};
+
+//Get All Users
+export const getAllUserAdminReducer = (state = { users: [] }, action) => {
+  switch (action.type) {
+    case GET_ALL_USERS_REQUEST:
+      return { loading: true };
+    case GET_ALL_USERS_SUCCESS:
+      return {
+        loading: false,
+        users: action.payload.AllUsers,
+        success: action.payload.success,
+        usersCount: action.payload.userDocCount,
+      };
+    case GET_ALL_USERS_FAIL:
+      return {
+        loading: false,
+        error: action.error,
+      };
+    case CLEAR_ERROR:
+      return {
+        ...state,
+        error: null,
+      };
+    default:
+      return state;
+  }
+};
+
+export const deleteUserAdminReducer = (state = {}, action) => {
+  switch (action.type) {
+    case DELETE_USER_REQUEST:
+      return { loading: true };
+    case DELETE_USER_SUCCESS:
+      return {
+        loading: false,
+        DeletedUser: action.payload.DeletedUser,
+        success: action.payload.success,
+        message: action.payload.message,
+      };
+    case DELETE_USER_FAIL:
+      return {
+        loading: false,
+        error: action.error,
+      };
+    case CLEAR_ERROR:
+      return {
+        ...state,
+        error: null,
+      };
+    default:
+      return state;
+  }
+};
+
+
+export const userPasswordUpdateReducer = (state = {}, action) => {
+  switch (action.type) {
+    case USER_PASSWORD_UPDATE_REQUEST:
+      return {
+        loading: true,
+      };
+    case USER_PASSWORD_UPDATE_SUCCESS:
+      return {
+        loading: false,
+        message: action.payload.message,
+        success: action.payload.success,
+      };
+    case USER_PASSWORD_UPDATE_FAIL:
+      return {
+        loading: false,
+        error: action.error,
+      };
+    case CLEAR_ERROR:
+      return {
+        ...state,
+        error: null,
+      };
+    default:
+      return state;
+  }
+};
+
+export const logOutUser = (state = {}, action) => {
+  switch (action.type) {
+    case LOGOUT_USER_REQUEST:
+      return {
+        loading: true,
+      };
+    case LOGOUT_USER_SUCCESS:
+      return {
+        loading: false,
+        message: action.payload.message,
+        success: action.payload.success,
+      };
+    case LOGOUT_USER_FAIL:
+      return {
+        loading: false,
+        error: action.error,
+      };
+    case CLEAR_ERROR:
+      return {
+        ...state,
+        error: null,
+      };
+    default:
+      return state;
+  }
+};
+
+export const passwordResetEmailSendReducer = (state = {}, action) => {
+  switch (action.type) {
+    case SEND_PASSWORD_REST_EMAIL_REQUEST:
+      return {
+        loading: true,
+      };
+    case SEND_PASSWORD_REST_EMAIL_SUCCESS:
+      return {
+        loading: false,
+        success: action.payload.success,
+        message: action.payload.message,
+      };
+    case SEND_PASSWORD_REST_EMAIL_FAIL:
+      return {
+        ...state,
+        loading: false,
+        error: action.error,
+      };
+    case CLEAR_ERROR:
+      return {
+        ...state,
+        error: null,
+      };
+    default:
+      return state;
+  }
+};
+
+export const userPasswordResetReducer = (state = {}, action) => {
+  switch (action.type) {
+    case USER_PASSWORD_REST_REQUEST:
+      return {
+        loading: true,
+      };
+    case USER_PASSWORD_REST_SUCCESS:
+      return {
+        loading: false,
+        success: action.payload.success,
+        message: action.payload.message,
+      };
+    case USER_PASSWORD_REST_FAIL:
+      return {
+        ...state,
+        loading: false,
+        error: action.error,
+      };
+    case CLEAR_ERROR:
+      return {
+        ...state,
+        error: null,
+      };
+    default:
+      return state;
+  }
+};
+
+export const updateUserRoleReducer = (state = {}, action) => {
+  switch (action.type) {
+    case UPDATE_USER_ROLE_REQUEST:
+      return {
+        loading: true,
+      };
+    case UPDATE_USER_ROLE_SUCCESS:
+      return {
+        loading: false,
+        updatedUser: action.payload.isUserExit,
+        success: action.payload.success,
+        message: action.payload.message,
+      };
+
+    case UPDATE_USER_ROLE_FAIL:
+      return {
+        ...state,
+        loading: false,
+        error: action.error,
+      };
+    case CLEAR_ERROR:
+      return {
+        ...state,
+        error: null,
+      };
+    default:
+      return state;
+  }
+};
+
+// path :- frontend\src\Redux\Store.js
+
+import { createStore, applyMiddleware, combineReducers } from "redux";
+import thunk from "redux-thunk";
+import { composeWithDevTools } from "@redux-devtools/extension";
+import {
+  loginReducer,
+  registerReducer,
+  logOutUser,
+  userPasswordUpdateReducer,
+  passwordResetEmailSendReducer,
+  userPasswordResetReducer,
+  getAllUserAdminReducer,
+  deleteUserAdminReducer,
+  updateUserRoleReducer,
+} from "./Reducers/userReducers";
+import {
+  getAllProductsReducer,
+  addProductsReducer,
+  deleteProductReducer,
+  getSingleProductReducer,
+  updateProductReducer,
+} from "./Reducers/productReducer";
+import { myCartProductReducer } from "./Reducers/cartReducer";
+import {
+  addCategoryReducer,
+  deleteCategoryReducer,
+  getCategoryReducer,
+  updateCategoryReducer,
+} from "./Reducers/categoryReducer";
+import {
+  getAllOrdersAdminReducer,
+  getUpdateOrderAdminReducer,
+  getUserOrderDetailsReducer,
+  getUserOrderReducer,
+} from "./Reducers/ordersReducer";
+import {
+  deleteReviewsReducer,
+  getAllAdminReviewsReducer,
+  getAllReviewsReducer,
+} from "./Reducers/reviewsReducer";
+
+const rootReducer = combineReducers({
+  //User Reducer
+  register: registerReducer,
+  user: loginReducer,
+  logOut: logOutUser,
+  passwordUpdate: userPasswordUpdateReducer,
+  sendRestPassMail: passwordResetEmailSendReducer,
+  passwordReset: userPasswordResetReducer,
+  getAllOrders: getUserOrderReducer,
+  getOrderDetails: getUserOrderDetailsReducer,
+  getAllReviews: getAllReviewsReducer,
+  userCart: myCartProductReducer,
+
+  // Product Reducers:
+  addProduct: addProductsReducer,
+  getAllProducts: getAllProductsReducer,
+  getSingleProduct: getSingleProductReducer,
+  deleteProduct: deleteProductReducer,
+  updateProduct: updateProductReducer,
+
+  //Category Reducer
+  addCategory: addCategoryReducer,
+  getAllCategory: getCategoryReducer,
+  deleteCategory: deleteCategoryReducer,
+
+  //Admin Reducer
+  adminAllOrders: getAllOrdersAdminReducer,
+  adminUpdateOrder: getUpdateOrderAdminReducer,
+  adminAllUsers: getAllUserAdminReducer,
+  adminDeleteUser: deleteUserAdminReducer,
+  adminUpdateUser: updateUserRoleReducer,
+  adminUpdateCategory: updateCategoryReducer,
+  adminGetReviews: getAllAdminReviewsReducer,
+  deleteReview: deleteReviewsReducer,
+});
+
+const initialState = {
+  userCart: {
+    cartItems: localStorage.getItem("userCart")
+      ? JSON.parse(localStorage.getItem("userCart"))
+      : [],
+  },
+};
+
+const middleware = [thunk];
+
+const store = createStore(
+  rootReducer,
+  initialState,
+  composeWithDevTools(applyMiddleware(...middleware))
+);
+
+export default store;
+
+
+// path :- frontend\src\App.js
+import React, { useEffect } from "react";
+import "./App.css";
+import { BrowserRouter, Route, Routes } from "react-router-dom";
+import Home from "./Pages/Home/Home";
+import Product from "./Pages/Product/Products";
+import Login from "./Pages/Login/Login";
+import SignUp from "./Pages/SignUp/SignUp";
+import ForgetPassword from "./Pages/ForgetPassword";
+import UpdatePassword from "./Pages/UpdatePassword";
+import Checkout from "./Pages/CheckOut/Checkout";
+import MyOrders from "./Pages/Orders/MyOrders";
+import { useDispatch, useSelector } from "react-redux";
+import { loadUserAction } from "./Redux/Actions/userAction";
+import RestPassword from "./Pages/RestPassword";
+import AdminHome from "./Pages/Admin/AdminHome";
+import AddProduct from "./Pages/Admin/Product/AddProducts/AddProduct";
+import AddCategory from "./Pages/Admin/Product/AddCategory/AddCategory";
+import ViewProducts from "./Pages/Admin/Product/ViewsProducts/ViewProducts";
+import OrderList from "./Pages/Admin/Orders/OrderList";
+import UsersList from "./Pages/Admin/Users/UsersList";
+import OrderDetails from "./Pages/Orders/OrderDetails";
+import AllOrders from "./Pages/Orders/AllOrders";
+import AddReviews from "./Pages/Reviews/AddReviews";
+import AllReviews from "./Pages/Reviews/AllReviews";
+import About from "./Pages/About/About";
+import PageNotFound from "./Components/PageNotFound/PageNotFound";
+import AdminProducts from "./Pages/Admin/Product/AdminProducts";
+import UpdateProducts from "./Pages/Admin/Product/UpdateProducts/UpdateProducts";
+import ViewCategory from "./Pages/Admin/Product/ViewCategory/ViewCategory";
+import UpdateCategory from "./Pages/Admin/Product/UpdateCategory/UpdateCategory";
+import AdminOrderDetails from "./Pages/Admin/Orders/OrderDetails";
+import UpdateUser from "./Pages/Admin/Users/UpdateUser";
+import ReviewsList from "./Pages/Admin/Reviews/ReviewsList";
+
+const App = () => {
+  const { isAuthUser, user } = useSelector((state) => state.user);
+
+  const dispatch = useDispatch();
+  useEffect(() => {
+    dispatch(loadUserAction());
+  }, [dispatch]);
+
+  return (
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/Signup" element={!isAuthUser ? <SignUp /> : <Home />} />
+        <Route path="/Login" element={!isAuthUser ? <Login /> : <Home />} />
+        <Route
+          path="/RestPassword"
+          element={isAuthUser ? <UpdatePassword /> : <Login />}
+        />
+        <Route
+          path="/Forget/Password"
+          element={!isAuthUser ? <ForgetPassword /> : <Home />}
+        />
+        <Route path="/products" element={<Product />} />
+        <Route path="/products/:keyword" element={<Product />} />
+        <Route path="/products/category/:categoryId" element={<Product />} />
+        <Route path="/Order/Checkout" element={<Checkout />} />
+
+        <Route
+          path="/Order/MyOrder"
+          element={isAuthUser ? <AllOrders /> : <Login />}
+        />
+        <Route
+          path="/Order/OrderDetails/:orderId"
+          element={isAuthUser ? <OrderDetails /> : <Login />}
+        />
+        <Route
+          path="/reset-password/:id/:token"
+          element={!isAuthUser ? <RestPassword /> : <Login />}
+        />
+
+        <Route
+          path="/review/add"
+          element={isAuthUser ? <AddReviews /> : <Login />}
+        />
+
+        <Route path="/reviews/all" element={<AllReviews />} />
+        <Route path="/about" element={<About />} />
+
+        {user && user.role === "Admin" ? (
+          <>
+            <Route path="/admin/home" element={<AdminHome />} />
+
+            {/* Product Route */}
+            <Route path="/admin/products" element={<AdminProducts />} />
+            <Route path="/admin/add/products" element={<AddProduct />} />
+            <Route path="/admin/view/products" element={<ViewProducts />} />
+            <Route
+              path="/admin/update/products/:productId"
+              element={<UpdateProducts />}
+            />
+
+            <Route path="/admin/add/category" element={<AddCategory />} />
+            <Route path="/admin/view/category" element={<ViewCategory />} />
+            <Route
+              path="/admin/update/category/:categoryId"
+              element={<UpdateCategory />}
+            />
+
+            {/* Orders Route */}
+            <Route path="/admin/view/orders" element={<OrderList />} />
+            <Route
+              path="/admin/update/order/:orderId"
+              element={<AdminOrderDetails />}
+            />
+
+            {/* Users Route */}
+            <Route path="/admin/view/users" element={<UsersList />} />
+            <Route path="/admin/update/:userId" element={<UpdateUser />} />
+
+            {/* Reviews Route */}
+            <Route path="/admin/view/reviews" element={<ReviewsList />} />
+          </>
+        ) : (
+          ""
+        )}
+
+        <Route path="*" element={<PageNotFound />} />
+      </Routes>
+    </BrowserRouter>
+  );
+};
+
+export default App;
+
+
+// path :- frontend\src\Components\Cart\Cart.jsx
+import React, { useEffect, useRef } from "react";
+import { useSelector } from "react-redux";
+import { FaTrashRestore } from "react-icons/fa";
+import { Link } from "react-router-dom";
+
+const Cart = () => {
+  const shoppingCart = useRef();
+  //getting cart data from state
+  const { cartItems } = useSelector((state) => state.userCart);
+  useEffect(() => {}, [cartItems]);
+
+  return (
+    <>
+      <div className="shopping-cart" ref={shoppingCart}>
+        {cartItems &&
+          cartItems.map((item) => {
+            return (
+              <div className="box">
+                <img src={item.image} alt="Product Images" />
+                <div className="content">
+                  <i> {<FaTrashRestore />}</i>
+                  <h3>{item.name}</h3>
+                  <span className="price">₹{item.rate}/- </span>
+                  <span className="qty">Qty: {item.quantity} Kg</span>
+                </div>
+              </div>
+            );
+          })}
+
+        <div className="total">Total : $20/- </div>
+        <Link to="/Order/Checkout" className="checkoutBtn">
+          Check Out
+        </Link>
+      </div>
+    </>
+  );
+};
+
+export default Cart;
+
+// path :- frontend\src\Components\Footer\Footer.jsx
+import React from "react";
+import "./Footer.css";
+import { RiShoppingBasketFill, RiMapPin2Line } from "react-icons/ri";
+import { SlSocialInstagram } from "react-icons/sl";
+import { TiSocialTwitter, TiSocialLinkedin } from "react-icons/ti";
+import { IoLogoWhatsapp } from "react-icons/io";
+import { MdPhoneForwarded, MdOutlineMarkEmailRead } from "react-icons/md";
+import { AiOutlineArrowRight } from "react-icons/ai";
+import { Link } from "react-router-dom";
+import CreditCard from "../../../src/Assets/Images/payment.png";
+import { useState } from "react";
+
+const Footer = () => {
+  const [message, setMessage] = useState();
+  const sendMessage = () => {
+    window.location = `https://wa.me/9172086108?text=${message}`;
+  };
+  return (
+    <>
+      <footer>
+        <section className="footer">
+          <div className="box-container">
+            <div className="box">
+              <h3>
+              <img src="logo149.png" alt="Logo" height={60} width={120} />
+              </h3>
+              <p>
+                Fresh And Organic Delivery We Make Your Life Easy By Delivering
+                Grocery, Fruits And Dairy Products
+              </p>
+              <div className="share">
+                <Link>
+                  <i
+                    onClick={() => {
+                      window.location = `https://wa.me/9545912777?text=Say Hello..!!`;
+                    }}
+                  >
+                    {<IoLogoWhatsapp />}
+                  </i>
+                </Link>
+                <a href="https://instagram.com">
+                  <i>{<SlSocialInstagram />}</i>
+                </a>
+                <Link to="#">
+                  <i>{<TiSocialTwitter />}</i>
+                </Link>
+                <Link>
+                  <i>{<TiSocialLinkedin />}</i>
+                </Link>
+              </div>
+            </div>
+
+            {/* Contact Section */}
+
+            <div className="box">
+              <h3>Contact Us </h3>
+              <Link className="links">
+                <i>
+                  <MdPhoneForwarded />
+                </i>
+                +91 9545912777
+              </Link>
+              <Link className="links">
+                <i>
+                  <MdPhoneForwarded />
+                </i>
+                +91 7873533777
+              </Link>
+
+              <a href="mailto:xyz@gmail.com" className="links">
+                <i>
+                  <MdOutlineMarkEmailRead />
+                </i>
+                vegetableking11@gmail.com
+              </a>
+
+              <Link className="links">
+                <i>
+                  <RiMapPin2Line />
+                </i>
+                Sangli , India - 416416
+              </Link>
+            </div>
+
+            {/* Quick Link */}
+
+            <div className="box">
+              <h3>Quick Link </h3>
+              <Link to="/" className="links">
+                <i>
+                  <AiOutlineArrowRight />
+                </i>
+                Home
+              </Link>
+
+              <Link to={"/"} className="links">
+                <i>
+                  <AiOutlineArrowRight />
+                </i>
+                Features
+              </Link>
+
+              <Link to="/products" className="links">
+                <i>
+                  <AiOutlineArrowRight />
+                </i>
+                Products
+              </Link>
+
+              <Link to="/reviews/all" className="links">
+                <i>
+                  <AiOutlineArrowRight />
+                </i>
+                Reviews
+              </Link>
+            </div>
+            {/* Quick Chat */}
+            <div className="box">
+              <h3>Let's Chats </h3>
+              <p>Type Message..!!</p>
+              <input
+                type="text"
+                className="whats-message"
+                placeholder="Enter Your Message..!!"
+                onChange={(e) => setMessage(e.target.value)}
+              />
+
+              <button className="sendMsgBtn" onClick={sendMessage}>
+                Send
+              </button>
+              <img src={CreditCard} alt="Payment Img" className="payment-img" />
+            </div>
+          </div>
+          <div className="credit">
+            <span> शुभ </span> 
+          </div>
+        </section>
+      </footer>
+    </>
+  );
+};
+
+export default Footer;
+
+// path :- frontend\src\Components\Header\Header.jsx
+import React, { useState } from "react";
+import "./Header.css";
+import { Link, useNavigate } from "react-router-dom";
+import { RiShoppingBasketFill } from "react-icons/ri";
+import { HiMenuAlt3 } from "react-icons/hi";
+import { BiSearch, BiCart } from "react-icons/bi";
+import { FaUserCheck, FaTrashRestore } from "react-icons/fa";
+import { RiLogoutCircleRLine } from "react-icons/ri";
+import { useRef } from "react";
+import { AiOutlineArrowRight } from "react-icons/ai";
+import { RiEmotionHappyLine } from "react-icons/ri";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  loadUserAction,
+  logOutUserAction,
+} from "../../Redux/Actions/userAction";
+import { useEffect } from "react";
+import { removeCartItemAction } from "../../Redux/Actions/cartAction";
+
+const Header = () => {
+  const Navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { user } = useSelector((state) => state.user);
+  const { success: logOutSuccess, message } = useSelector(
+    (state) => state.logOut
+  );
+  const { cartItems } = useSelector((state) => state.userCart);
+
+  useEffect(() => {
+    if (logOutSuccess) {
+      alert("Logout Success..!!");
+      window.location.reload();
+    }
+  }, [cartItems, logOutSuccess]);
+
+  //Search
+  const [keyword, setKeyword] = useState("");
+  const handelSearch = (e) => {
+    e.preventDefault();
+    const trimKeyword = keyword.trim();
+    if (trimKeyword.length != 0) {
+      Navigate(`/products/${trimKeyword}`);
+    } else {
+      Navigate(`/products`);
+    }
+  };
+
+  //Log Out User
+  const logOutMe = () => {
+    dispatch(logOutUserAction());
+  };
+
+  //Remove Cart Item
+  const RemoveCartItem = (id) => {
+    dispatch(removeCartItemAction(id));
+  };
+
+  //Close Open Section
+  window.onscroll = () => {
+    searchBar.current.classList.remove("active");
+    shoppingCart.current.classList.remove("active");
+    navbar.current.classList.remove("active");
+    profile.current.classList.remove("active");
+  };
+
+  //Toggle Navbar
+  const profile = useRef();
+  const toggleProfile = () => {
+    profile.current.classList.toggle("active");
+    navbar.current.classList.remove("active");
+    searchBar.current.classList.remove("active");
+    shoppingCart.current.classList.remove("active");
+  };
+  //Toggle Navbar
+  const navbar = useRef();
+  const toggleNavbar = () => {
+    navbar.current.classList.toggle("active");
+    searchBar.current.classList.remove("active");
+    shoppingCart.current.classList.remove("active");
+    profile.current.classList.remove("active");
+  };
+
+  //Toggle Cart
+  const shoppingCart = useRef();
+  const toggleShoppingCart = () => {
+    shoppingCart.current.classList.toggle("active");
+    searchBar.current.classList.remove("active");
+    navbar.current.classList.remove("active");
+    profile.current.classList.remove("active");
+  };
+
+  //Toggle Search Bar
+  const searchBar = useRef();
+  const toggleSearchBar = () => {
+    searchBar.current.classList.toggle("active");
+    shoppingCart.current.classList.remove("active");
+    navbar.current.classList.remove("active");
+    profile.current.classList.remove("active");
+  };
+
+  return (
+    <>
+      <header className="header">
+      <Link to="/" className="logo">
+        <img src="logo149.png" alt="Logo" height={60} width={60} />
+      </Link>
+        <nav className="navbar-section" ref={navbar}>
+          <Link to="/">Home</Link>
+          <Link to="/#features">Features</Link>
+          <Link to="/products">Products</Link>
+          <Link to="/reviews/all">Reviews</Link>
+          <Link to="/about">About Us</Link>
+        </nav>
+        <div className="navbar-icons">
+          <div id="menu-btn" onClick={toggleNavbar}>
+            <HiMenuAlt3 />
+          </div>
+          <div id="search-btn" onClick={toggleSearchBar}>
+            <BiSearch />
+          </div>
+
+          <div id="cart-btn" onClick={toggleShoppingCart}>
+            <BiCart />
+            <span className="cart-count">
+              <small className="count">{cartItems && cartItems.length}</small>
+            </span>
+          </div>
+          <div id="login-btn" onClick={toggleProfile}>
+            {user ? <RiEmotionHappyLine /> : <FaUserCheck />}
+          </div>
+        </div>
+        <form
+          className="search-form"
+          ref={searchBar}
+          onSubmit={(e) => handelSearch(e)}
+        >
+          <input
+            type="search"
+            id="search-box"
+            placeholder="Search Here...!!"
+            onChange={(e) => setKeyword(e.target.value)}
+          />
+          <button htmlFor="search-box">
+            <BiSearch />
+          </button>
+        </form>
+        <div className="shopping-cart" ref={shoppingCart}>
+          {cartItems.length !== 0 &&
+            cartItems.map((item) => {
+              return (
+                <div className="box" key={item.id}>
+                  <img src={item.image} alt="Product Images" />
+                  <div className="content">
+                    <i onClick={() => RemoveCartItem(item.id)}>
+                      {" "}
+                      {<FaTrashRestore />}
+                    </i>
+                    <h3>{item.name}</h3>
+                    <span className="price">
+                      ₹ {item.rate * item.quantity}/-{" "}
+                    </span>
+                    <span className="qty">Qty: {item.quantity} Kg</span>
+                  </div>
+                </div>
+              );
+            })}
+
+          <div className="total">
+            Total :{" "}
+            <span className="amount">
+              ₹{" "}
+              {cartItems &&
+                cartItems.reduce(
+                  (acc, item) => acc + item.quantity * item.rate,
+                  0
+                )}
+              / -
+            </span>
+          </div>
+          <Link to="/Order/Checkout" className="checkoutBtn">
+            Go To Cart
+          </Link>
+        </div>
+        <div className="user-profile" ref={profile}>
+          {!user ? (
+            <ul>
+              <Link to="/Login">
+                <li>
+                  <AiOutlineArrowRight /> Login
+                </li>
+              </Link>
+
+              <Link to="/Signup">
+                <li>
+                  <AiOutlineArrowRight /> Sign Up
+                </li>
+              </Link>
+            </ul>
+          ) : (
+            <ul className="After-login-option">
+              {user && user.role === "Admin" ? (
+                <Link to="/admin/home">
+                  <li>
+                    <AiOutlineArrowRight /> Dashboard
+                  </li>
+                </Link>
+              ) : (
+                ""
+              )}
+
+              <Link to="/Order/MyOrder">
+                <li>
+                  <AiOutlineArrowRight /> My Orders
+                </li>
+              </Link>
+              <Link to="/RestPassword">
+                <li>
+                  <AiOutlineArrowRight /> Change Password
+                </li>
+              </Link>
+              {/* <Link>
+                <li>
+                  <AiOutlineArrowRight /> Change Email
+                </li>
+              </Link> */}
+              <Link to={"/review/add"}>
+                <li>
+                  <AiOutlineArrowRight /> Add Reviews
+                </li>
+              </Link>
+              <li>
+                <button onClick={logOutMe}>
+                  <RiLogoutCircleRLine /> Log Out
+                </button>
+              </li>
+            </ul>
+          )}
+        </div>
+      </header>
+    </>
+  );
+};
+
+export default Header;
+
+// path :- frontend\src\Components\NotFoundCart\Loader.jsx
+import React from "react";
+import "./Loader.css";
+
+const Loader = ({ LoadingName }) => {
+  return (
+    <>
+      <div className="loader-container">
+        <div className="loader-container-pop-cart">
+          <div className="loader-container-animation">
+            <h3 className="loader-loading-text"></h3>
+          </div>
+          <h1>{LoadingName}..!!</h1>
+        </div>
+      </div>
+    </>
+  );
+};
+
+export default Loader;
+
+// path :- frontend\src\Components\PageNotFound\PageNotFound.jsx
+
+import React from "react";
+import Footer from "../Footer/Footer";
+import Header from "../Header/Header";
+import NotFoundCart from "../NotFoundCart/NotFoundCart";
+
+const PageNotFound = () => {
+  return (
+    <>
+      <Header />
+      <NotFoundCart msg={"404 Page Not Found"} />;
+      <Footer />
+    </>
+  );
+};
+
+export default PageNotFound;
+
+// path :- frontend\src\Pages\About\About.js
+import React from "react";
+import Footer from "../../Components/Footer/Footer";
+import Header from "../../Components/Header/Header";
+import "./About.css";
+// import MetaData from "../MetaData";
+
+const About = () => {
+  const visitInstagram = () => {
+    window.location = "";
+  };
+  document.title = "About Us";
+  return (
+    <>
+      <Header />
+
+      <div className="about-section-container">
+        <h1 className="Heading">
+          About <span>Us</span>
+        </h1>
+        {/* <MetaData title={'About Us'} /> */}
+        <div className="about-section-box">
+          <div>
+            <div>
+              <img
+                style={{ width: "15rem", height: "15rem", margin: "2rem 0" }}
+                src="logo149.png"
+                alt="Founder"
+              />
+              <h1>Vegetable King</h1>
+              {/* <button onClick={visitInstagram}>Visit Instagram</button> */}
+              <br />
+              <p>
+                Vegetable King
+              </p>
+              <p>
+                Contact: 9545912777, 7873533777
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+      <Footer />
+    </>
+  );
+};
+
+export default About;
+
+// path :- frontend\src\Pages\Admin\Components\Header\Header.jsx
+import React from "react";
+import "./Header.css";
+const Header = () => {
+  return (
+    <>
+      <div className="admin-header">
+        <h1>Hello Aditya</h1>
+      </div>
+    </>
+  );
+};
+
+export default Header;
+
+// path :- frontend\src\Pages\Admin\Components\Sidebar\Sidebar.jsx
+import React from "react";
+import {
+  AiFillAppstore,
+  AiOutlineUserSwitch,
+  AiOutlineRightCircle,
+} from "react-icons/ai";
+import { MdFavoriteBorder } from "react-icons/md";
+import { BiHomeHeart } from "react-icons/bi";
+import { Link } from "react-router-dom";
+import "./Sidebar.css";
+
+const Sidebar = () => {
+  return (
+    <>
+      <div className="sidebar-container">
+        <ul>
+          <Link to="/admin/home">
+            <li>
+              <i>
+                <BiHomeHeart />
+              </i>
+              <span>Dashboard</span>
+            </li>
+          </Link>
+
+          <Link to="/admin/products">
+            <li>
+              <i>
+                <AiFillAppstore />
+              </i>
+              <span>Products</span>
+            </li>
+          </Link>
+          <Link to="/admin/view/orders">
+            <li>
+              <i>
+                <MdFavoriteBorder />
+              </i>
+              <span>Orders</span>
+            </li>
+          </Link>
+          <Link to="/admin/view/users">
+            <li>
+              <i>
+                <AiOutlineUserSwitch />
+              </i>
+              <span>Users</span>
+            </li>
+          </Link>
+          <Link to="/admin/view/reviews">
+            <li>
+              <i>
+                <AiOutlineRightCircle />
+              </i>
+              <span>Reviews</span>
+            </li>
+          </Link>
+        </ul>
+      </div>
+    </>
+  );
+};
+
+export default Sidebar;
+
+// path :- frontend\src\Pages\Admin\Orders\OrderDetails.jsx
+import React, { useEffect } from "react";
+import "./OrderList.css";
+import { useDispatch, useSelector } from "react-redux";
+import { useParams } from "react-router-dom";
+import Header from "../../../Components/Header/Header";
+import Sidebar from "../Components/Sidebar/Sidebar";
+import Loader from "../../../Components/Loader/Loader";
+import NotFoundCart from "../../../Components/NotFoundCart/NotFoundCart";
+import {
+  getUsersOrderDetailsAction,
+  updateOrdersAdminAction,
+} from "../../../Redux/Actions/orderActions";
+import { useState } from "react";
+
+const AdminOrderDetails = () => {
+  const [oStatus, setOrderStatus] = useState("");
+
+  const {
+    loading: orderLoading,
+    order,
+    error: orderError,
+  } = useSelector((state) => state.getOrderDetails);
+
+  const {
+    loading: updateLoading,
+    success,
+    error: updateOrderError,
+  } = useSelector((state) => state.adminUpdateOrder);
+
+  const dispatch = useDispatch();
+  const { orderId } = useParams();
+
+  const updateOrderStatus = () => {
+    if (oStatus !== "") {
+      dispatch(updateOrdersAdminAction(orderId, oStatus));
+    } else {
+      alert("Select Order Status..!!");
+    }
+    // console.log(oStatus);
+  };
+
+  useEffect(() => {
+    if (orderId) {
+      dispatch(getUsersOrderDetailsAction(orderId));
+    }
+  }, [orderId, updateLoading]);
+
+  return (
+    <>
+      <Header />
+      <Sidebar />
+      <div className="dashboard-container">
+        {orderLoading ? (
+          <Loader LoadingName={"Order Loading"} />
+        ) : orderError ? (
+          <>
+            <NotFoundCart msg={"Something Went To Wrong"} />
+          </>
+        ) : order && order.orderItems ? (
+          <>
+            <div className="orders-container "></div>
+            <div className="dashboard-sub-heading">
+              <h1>Order Details</h1>
+            </div>
+            <div className="orders-box">
+              <div className="orders-cart-item">
+                <div className="orders-cart-item-box">
+                  <div className="orders-total-cart-price">
+                    <h2>Order Items : {order && order.orderItems.length} </h2>
+                    <h2 className="">
+                      Total Amount : ₹ {order && order.total}{" "}
+                    </h2>
+                    {order.status === "Delivered" ? (
+                      ""
+                    ) : (
+                      <>
+                        <select
+                          className="update-order-status"
+                          onChange={(e) => {
+                            setOrderStatus(e.target.value);
+                          }}
+                        >
+                          <option value="">Update State</option>
+                          {order.status === "Processing" ? (
+                            <option value="Shipped">Shipped</option>
+                          ) : (
+                            <option value="Delivered">Delivered</option>
+                          )}
+                        </select>
+                        <button
+                          className="update-order-status-btn"
+                          onClick={updateOrderStatus}
+                        >
+                          Update Status
+                        </button>
+                      </>
+                    )}
+                  </div>
+                </div>
+                {order &&
+                  order.orderItems.map((item) => {
+                    return (
+                      <div className="orders-cart-item-box" key={item._id}>
+                        <img src={item.image} alt="Product Image" />
+                        <div>
+                          <h2>{item.name}</h2>
+                          <h4> Quantity : {item.quantity} KG </h4>
+                          <h4> Rate : ₹ {item.rate}/Kg </h4>
+                        </div>
+                        <div className="">
+                          <h3>₹ {item.rate * item.quantity}</h3>
+                          <h3
+                            className={
+                              order.status === "Processing"
+                                ? "order-processing-status"
+                                : order.status === "Shipped"
+                                ? "order-shipping-status"
+                                : "order-delivered-status"
+                            }
+                          >
+                            {order.status}
+                          </h3>
+                          <span className="order-date"> {order.orderDate}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+            </div>
+          </>
+        ) : (
+          <NotFoundCart msg={" Sorry Order Not Exit"} />
+        )}
+      </div>
+    </>
+  );
+};
+
+export default AdminOrderDetails;
+
+
+// path :- frontend\src\Pages\Admin\Orders\OrderList.jsx
+import React from "react";
+import { useEffect } from "react";
+import { getAllOrdersAdminAction } from "../../../Redux/Actions/orderActions";
+import Header from "../../../Components/Header/Header";
+import Sidebar from "../Components/Sidebar/Sidebar";
+import { useDispatch, useSelector } from "react-redux";
+import { HiPencilAlt } from "react-icons/hi";
+import Loader from "../../../Components/Loader/Loader";
+import NotFoundCart from "../../../Components/NotFoundCart/NotFoundCart";
+import { Link } from "react-router-dom";
+
+const OrderList = () => {
+  const dispatch = useDispatch();
+  const { loading, orders, success, ordersCounts, error } = useSelector(
+    (state) => state.adminAllOrders
+  );
+  useEffect(() => {
+    dispatch(getAllOrdersAdminAction());
+  }, []);
+  return (
+    <>
+      <Header />
+      <Sidebar />
+      <div className="dashboard-container">
+        {loading ? (
+          <Loader LoadingName={"Orders Loading"} />
+        ) : success ? (
+          <>
+            <div className="dashboard-sub-heading">
+              <h1>All Orders</h1>
+            </div>
+
+            <div className="products-table">
+              <table>
+                <thead>
+                  <th>Order Id</th>
+                  <th>Name</th>
+                  <th>Items</th>
+                  <th>Amount</th>
+                  <th>Status</th>
+                  <th>Date</th>
+                  <th colSpan={2}>Actions</th>
+                </thead>
+                {orders &&
+                  orders.map((order) => {
+                    return (
+                      <>
+                        <tbody key={order._id}>
+                          <td>
+                            <Link to={`/admin/update/order/${order._id}`}>
+                              #{order._id}
+                            </Link>{" "}
+                          </td>
+                          <td>
+                            {order.user.firstName + " " + order.user.lastName}
+                          </td>
+                          <td>{order.orderItems.length}</td>
+                          <td> ₹ {order.total}</td>
+                          <td
+                            className={
+                              order.status === "Processing"
+                                ? "order-processing-status"
+                                : order.status === "Shipped"
+                                ? "order-shipping-status"
+                                : "order-delivered-status"
+                            }
+                          >
+                            {order.status}
+                          </td>
+                          <td>{order.orderDate}</td>
+                          <td>
+                            <Link to={`/admin/update/order/${order._id}`}>
+                              {<HiPencilAlt />}
+                            </Link>
+                          </td>
+                          {/* <td className="admin-delete-products-icon">
+                          {<FaTrash />}
+                        </td> */}
+                        </tbody>
+                      </>
+                    );
+                  })}
+              </table>
+            </div>
+          </>
+        ) : error ? (
+          <NotFoundCart msg={error} />
+        ) : (
+          ""
+        )}
+      </div>
+    </>
+  );
+};
+
+export default OrderList;
+
+// path :- frontend\src\Pages\Admin\Product\AddCategory\AddCategory.jsx
+import React, { useState } from "react";
+import Sidebar from "../../Components/Sidebar/Sidebar";
+import Header from "../../../../Components/Header/Header";
+import { addCategoryAction } from "../../../../Redux/Actions/categoryAction";
+import { useDispatch, useSelector } from "react-redux";
+
+const AddCategory = () => {
+  const dispatch = useDispatch();
+
+  const { loading, success, error } = useSelector((state) => state.addCategory);
+
+  const [categoryName, setCategoryName] = useState("");
+  const [categoryImage, setCategoryImage] = useState("");
+  const [previewImage, setPreviewImage] = useState("");
+
+  //handel image
+  const handelImageChange = (e) => {
+    const reader = new FileReader();
+    reader.onload = async () => {
+      if (reader.readyState === 2) {
+        setCategoryImage(reader.result);
+      }
+    };
+    reader.readAsDataURL(e.target.files[0]);
+    setPreviewImage(window.URL.createObjectURL(e.target.files[0]));
+  };
+
+  //handel submit
+  const handelAddCategorySubmit = (e) => {
+    e.preventDefault();
+    const categoryData = new FormData();
+    categoryData.append("categoryName", categoryName);
+    categoryData.append("categoryImage", categoryImage);
+    dispatch(addCategoryAction(categoryData));
+  };
+
+  return (
+    <>
+      <Header />
+      <Sidebar />
+      <div className="dashboard-container">
+        <div className="dashboard-sub-heading">
+          <h1>Add Category</h1>
+        </div>
+        <div className="add-product-form-box">
+          <form
+            encType="multipart/form-data"
+            onSubmit={(e) => handelAddCategorySubmit(e)}
+          >
+            <div className="product-name">
+              <input
+                type="text"
+                value={categoryName}
+                placeholder="Category Name"
+                required
+                onChange={(e) => setCategoryName(e.target.value)}
+              />
+            </div>
+
+            <div className="product-image">
+              <input
+                type="file"
+                accept="images/*"
+                required
+                onChange={(e) => handelImageChange(e)}
+              />
+            </div>
+            <div className="product-preview">
+              {previewImage ? <img src={previewImage} alt="" /> : ""}
+            </div>
+            {error ? (
+              <div className="upload-error">
+                <h1>{error}</h1>
+              </div>
+            ) : (
+              ""
+            )}
+
+            {success ? (
+              <div className="upload-error">
+                <h1>Category Added..!!</h1>
+              </div>
+            ) : (
+              ""
+            )}
+            <div className="add-product-form-btn">
+              <button>Add Category</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </>
+  );
+};
+
+export default AddCategory;
+
+// path :- frontend\src\Pages\Admin\Product\AddProducts\AddProducts.jsx
+import React, { useState } from "react";
+import "./AddProduct.css";
+import Sidebar from "../../Components/Sidebar/Sidebar";
+import Header from "../../../../Components/Header/Header";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  AddProductsAction,
+  clearError,
+} from "../../../../Redux/Actions/productAction";
+import { useEffect } from "react";
+import { getAllCategoryAction } from "../../../../Redux/Actions/categoryAction";
+import Loader from "../../../../Components/Loader/Loader";
+
+const AddProduct = () => {
+  //get all category form state
+  const {
+    loading,
+    Categories,
+    error: categoryError,
+  } = useSelector((state) => state.getAllCategory);
+
+  //add product state
+  const {
+    loading: productLoading,
+    success,
+    error: productError,
+  } = useSelector((state) => {
+    return state.addProduct;
+  });
+
+  //Collect Product Form Data
+  const [productData, SetProductData] = useState({
+    name: "",
+    rate: "",
+    category: "",
+    stocks: "",
+  });
+
+  const dispatch = useDispatch("");
+  const [name, setName] = useState("");
+  const [rate, setRate] = useState("");
+  const [category, setCategory] = useState("");
+  const [stocks, setStocks] = useState("");
+  const [image, setImage] = useState("");
+  const [previewImage, setPreviewImage] = useState("");
+  const [validationError, setValidationError] = useState([]);
+  const [weight, setWeight] = useState([]);
+
+  //handel weight
+  const handelWeightChecked = (e) => {
+    const isChecked = e.target.checked;
+    const convertNumber = Number(e.target.value);
+    const isExit = weight.includes(convertNumber);
+    if (isChecked) {
+      weight.push(convertNumber);
+    } else {
+      const index = weight.indexOf(convertNumber);
+      weight.splice(index, 1);
+    }
+  };
+
+  //handel image
+  const handelImageChange = (e) => {
+    const reader = new FileReader();
+    reader.onload = async () => {
+      if (reader.readyState === 2) {
+        setImage(reader.result);
+      }
+    };
+    reader.readAsDataURL(e.target.files[0]);
+    setPreviewImage(window.URL.createObjectURL(e.target.files[0]));
+  };
+
+  // handel submit
+  const handelAddProductSubmit = (e) => {
+    e.preventDefault();
+    if (category === "") {
+      validationError.push("Category:Select Category..!!");
+    } else {
+      const productFormData = new FormData();
+      productFormData.append("name", name);
+      productFormData.append("rate", rate);
+      productFormData.append("stocks", stocks);
+      productFormData.append("category", category);
+      weight.map((kg) => {
+        productFormData.append("kilogramOption", kg);
+      });
+      productFormData.append("image", image);
+      dispatch(AddProductsAction(productFormData));
+    }
+  };
+
+  if (productError) {
+    setTimeout(() => {
+      dispatch(clearError());
+    }, 5000);
+  }
+
+  if (validationError.length !== 0) {
+    setTimeout(() => {
+      setValidationError([]);
+    }, 5000);
+  }
+
+  useEffect(() => {
+    dispatch(getAllCategoryAction());
+  }, []);
+
+  return (
+    <>
+      <Header />
+      <Sidebar />
+      <div className="dashboard-container">
+        {loading || productLoading ? (
+          <Loader LoadingName={"Loading Product"} />
+        ) : (
+          <>
+            <div className="dashboard-sub-heading">
+              <h1>Add Products</h1>
+            </div>
+            <div className="add-product-form-box">
+              <form
+                encType="multipart/form-data"
+                onSubmit={(e) => {
+                  handelAddProductSubmit(e);
+                }}
+              >
+                <div className="product-name">
+                  <input
+                    type="text"
+                    placeholder="Product Name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                  />
+                </div>
+                <div className="product-rate">
+                  <input
+                    type="number"
+                    placeholder="Rate /Kg"
+                    value={rate}
+                    onChange={(e) => setRate(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="product-stocks">
+                  <input
+                    type="number"
+                    placeholder="Stocks"
+                    value={stocks}
+                    onChange={(e) => setStocks(e.target.value)}
+                    required
+                  />
+                </div>
+                <span>Select Weight </span>
+                <div className="product-weight">
+                  <br />
+                  <div className="weight-check">
+                    <input
+                      type="checkbox"
+                      value="0.5"
+                      onChange={(e) => {
+                        handelWeightChecked(e);
+                      }}
+                    />
+                    <label htmlFor="">0.5 KG</label>
+                  </div>
+                  <div className="weight-check">
+                    <input
+                      type="checkbox"
+                      value="1"
+                      onChange={(e) => {
+                        handelWeightChecked(e);
+                      }}
+                    />
+                    <label htmlFor="">1 KG</label>
+                  </div>
+                  <div className="weight-check">
+                    <input
+                      type="checkbox"
+                      value="1.5"
+                      onChange={(e) => {
+                        handelWeightChecked(e);
+                      }}
+                    />
+                    <label htmlFor="">1.5 KG</label>
+                  </div>
+                  <div className="weight-check">
+                    <input
+                      type="checkbox"
+                      value="2"
+                      onChange={(e) => {
+                        handelWeightChecked(e);
+                      }}
+                    />
+                    <label htmlFor="">2 KG</label>
+                  </div>{" "}
+                  <div className="weight-check">
+                    <input
+                      type="checkbox"
+                      value="2.5"
+                      onChange={(e) => {
+                        handelWeightChecked(e);
+                      }}
+                    />
+                    <label htmlFor="">2.5 KG</label>
+                  </div>
+                  <div className="weight-check">
+                    <input
+                      type="checkbox"
+                      value="3"
+                      onChange={(e) => {
+                        handelWeightChecked(e);
+                      }}
+                    />
+                    <label htmlFor="">3 KG</label>
+                  </div>
+                  <div className="weight-check">
+                    <input
+                      type="checkbox"
+                      value="3.5"
+                      onChange={(e) => {
+                        handelWeightChecked(e);
+                      }}
+                    />
+                    <label htmlFor="">3.5 KG</label>
+                  </div>
+                </div>
+                <br />
+                <div className="product-category">
+                  <select
+                    onChange={(e) => {
+                      setCategory(e.target.value);
+                    }}
+                    required
+                  >
+                    <option value="">Choose Category</option>
+                    {Categories &&
+                      Categories.map((category) => {
+                        return (
+                          <option value={category._id}>
+                            {category.categoryName}
+                          </option>
+                        );
+                      })}
+                  </select>
+                </div>
+                <br />
+                <br />
+                <div className="product-image">
+                  <input
+                    type="file"
+                    accept="images/*"
+                    required
+                    onChange={(e) => {
+                      handelImageChange(e);
+                    }}
+                  />
+                </div>
+                <div className="product-preview">
+                  {previewImage ? <img src={previewImage} alt="" /> : ""}
+                </div>
+                {productError &&
+                  productError.map((error) => {
+                    return (
+                      <>
+                        <div className="upload-error">
+                          <h1>{error}</h1>
+                        </div>
+                      </>
+                    );
+                  })}
+                {success ? (
+                  <div className="upload-error">
+                    <h1>Product Added..!!</h1>
+                  </div>
+                ) : (
+                  ""
+                )}
+                <div className="add-product-form-btn">
+                  <button type="submit">Add Product</button>
+                </div>
+              </form>
+            </div>
+          </>
+        )}
+      </div>
+    </>
+  );
+};
+
+export default AddProduct;
+
+// path :- frontend\src\Pages\Admin\Product\UpdateCategory\UpdateCategory.jsx
+import React, { useState } from "react";
+import Sidebar from "../../Components/Sidebar/Sidebar";
+import Header from "../../../../Components/Header/Header";
+import {
+  clearError,
+  updateCategoryAction,
+} from "../../../../Redux/Actions/categoryAction";
+import { useDispatch, useSelector } from "react-redux";
+import { useLocation, useParams } from "react-router-dom";
+
+const UpdateCategory = () => {
+  const Location = useLocation();
+  const { categoryId } = useParams();
+
+  const dispatch = useDispatch();
+
+  const [categoryName, setCategoryName] = useState(
+    Location.state.categoryName ? Location.state.categoryName : ""
+  );
+
+  const [categoryImage, setCategoryImage] = useState("");
+
+  const [previewImage, setPreviewImage] = useState(
+    Location.state.categoryImage ? Location.state.categoryImage : ""
+  );
+
+  //handel image
+  const handelImageChange = (e) => {
+    const reader = new FileReader();
+    reader.onload = async () => {
+      if (reader.readyState === 2) {
+        setCategoryImage(reader.result);
+      }
+    };
+    reader.readAsDataURL(e.target.files[0]);
+    setPreviewImage(window.URL.createObjectURL(e.target.files[0]));
+  };
+
+  const { loading, success, error, message } = useSelector(
+    (state) => state.adminUpdateCategory
+  );
+
+  //handel submit
+  const handelUpdateCategorySubmit = (e) => {
+    e.preventDefault();
+    const categoryData = new FormData();
+    if (categoryImage !== "") {
+      categoryData.append("categoryImage", categoryImage);
+    }
+    categoryData.append("categoryName", categoryName);
+    dispatch(updateCategoryAction(categoryId, categoryData));
+  };
+
+  if (error) {
+    setInterval(() => {
+      dispatch(clearError());
+    }, 5000);
+  }
+
+  return (
+    <>
+      <Header />
+      <Sidebar />
+      <div className="dashboard-container">
+        <div className="dashboard-sub-heading">
+          <h1>Update Category</h1>
+        </div>
+        <div className="add-product-form-box">
+          <form onSubmit={(e) => handelUpdateCategorySubmit(e)}>
+            <div className="product-name">
+              <input
+                type="text"
+                value={categoryName}
+                placeholder="Category Name"
+                required
+                onChange={(e) => setCategoryName(e.target.value)}
+              />
+            </div>
+
+            <div className="product-image">
+              <input
+                type="file"
+                accept="images/*"
+                onChange={(e) => handelImageChange(e)}
+              />
+            </div>
+            <div className="product-preview">
+              {previewImage ? <img src={previewImage} alt="" /> : ""}
+            </div>
+            {error ? (
+              <div className="upload-error">
+                <h1>{error}</h1>
+              </div>
+            ) : (
+              ""
+            )}
+
+            {success ? (
+              <div className="upload-error">
+                <h1>{message}</h1>
+              </div>
+            ) : (
+              ""
+            )}
+            <div className="add-product-form-btn">
+              <button>Update Category</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </>
+  );
+};
+
+export default UpdateCategory;
+
+// path :- frontend\src\Pages\Admin\Product\UpdateProducts\UpdateProducts.jsx
+import React, { useState } from "react";
+import Sidebar from "../../Components/Sidebar/Sidebar";
+import Header from "../../../../Components/Header/Header";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  AddProductsAction,
+  clearError,
+  updateProductAction,
+} from "../../../../Redux/Actions/productAction";
+import { useEffect } from "react";
+import { getAllCategoryAction } from "../../../../Redux/Actions/categoryAction";
+import Loader from "../../../../Components/Loader/Loader";
+import { useLocation, useParams, useNavigate } from "react-router-dom";
+const UpdateProducts = () => {
+  const dispatch = useDispatch();
+  const Location = useLocation();
+  const Navigate = useNavigate();
+  const { productId } = useParams();
+
+  const {
+    loading,
+    Categories,
+    error: categoryError,
+  } = useSelector((state) => state.getAllCategory);
+
+  const {
+    loading: productLoading,
+    success,
+    error: productError,
+    message,
+  } = useSelector((state) => {
+    return state.updateProduct;
+  });
+
+  const [name, setName] = useState(
+    Location.state.productName ? Location.state.productName : ""
+  );
+
+  const [rate, setRate] = useState(
+    Location.state.productRate ? Location.state.productRate : ""
+  );
+
+  const [stocks, setStocks] = useState(
+    Location.state.productStock ? Location.state.productStock : ""
+  );
+
+  const [weight, setWeight] = useState([0.5]);
+
+  const [image, setImage] = useState("");
+
+  const [previewImage, setPreviewImage] = useState(
+    Location.state.productImage ? Location.state.productImage : ""
+  );
+
+  const [category, setCategory] = useState("");
+  const [updateSuccess, setUpdateSuccess] = useState(false);
+
+  //handel image
+  const handelImageChange = (e) => {
+    const reader = new FileReader();
+    reader.onload = async () => {
+      if (reader.readyState === 2) {
+        setImage(reader.result);
+      }
+    };
+    reader.readAsDataURL(e.target.files[0]);
+    setPreviewImage(window.URL.createObjectURL(e.target.files[0]));
+  };
+
+  //handel weight
+  const handelWeightChecked = (e) => {
+    const isChecked = e.target.checked;
+    const convertNumber = Number(e.target.value);
+    const isExit = weight.includes(convertNumber);
+    if (isChecked) {
+      weight.push(convertNumber);
+    } else {
+      const index = weight.indexOf(convertNumber);
+      weight.splice(index, 1);
+    }
+  };
+
+  const handelAddProductSubmit = (e) => {
+    e.preventDefault();
+    if (category == "") {
+      alert("Category:Select Category..!!");
+    } else {
+      const productFormData = new FormData();
+      productFormData.append("name", name);
+      productFormData.append("rate", rate);
+      productFormData.append("stocks", stocks);
+      productFormData.append("category", category);
+      weight.map((kg) => {
+        productFormData.append("kilogramOption", kg);
+      });
+      productFormData.append("image", image);
+      dispatch(updateProductAction(productId, productFormData));
+    }
+  };
+
+  if (productError) {
+    setTimeout(() => {
+      dispatch(clearError());
+    }, 5000);
+  }
+
+  useEffect(() => {
+    dispatch(getAllCategoryAction());
+  }, [success]);
+
+  return (
+    <>
+      <Header />
+      <Sidebar />
+      <div className="dashboard-container">
+        {loading || productLoading ? (
+          <Loader LoadingName={"Loading Product"} />
+        ) : (
+          <>
+            <div className="dashboard-sub-heading">
+              <h1>Update Product</h1>
+            </div>
+            <div className="add-product-form-box">
+              <form
+                encType="multipart/form-data"
+                onSubmit={(e) => {
+                  handelAddProductSubmit(e);
+                }}
+              >
+                <div className="product-name">
+                  <input
+                    type="text"
+                    placeholder="Product Name"
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                  />
+                </div>
+                <div className="product-rate">
+                  <input
+                    type="number"
+                    placeholder="Rate /Kg"
+                    value={rate}
+                    onChange={(e) => setRate(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="product-stocks">
+                  <input
+                    type="number"
+                    placeholder="Stocks"
+                    value={stocks}
+                    onChange={(e) => setStocks(e.target.value)}
+                    required
+                  />
+                </div>
+                <span>Select Weight </span>
+                <div className="product-weight">
+                  <br />
+                  <div className="weight-check">
+                    <input
+                      type="checkbox"
+                      value="0.5"
+                      checked
+                      onChange={(e) => {
+                        handelWeightChecked(e);
+                      }}
+                    />
+                    <label htmlFor="">0.5 KG</label>
+                  </div>
+                  <div className="weight-check">
+                    <input
+                      type="checkbox"
+                      value="1"
+                      onChange={(e) => {
+                        handelWeightChecked(e);
+                      }}
+                    />
+                    <label htmlFor="">1 KG</label>
+                  </div>
+                  <div className="weight-check">
+                    <input
+                      type="checkbox"
+                      value="1.5"
+                      onChange={(e) => {
+                        handelWeightChecked(e);
+                      }}
+                    />
+                    <label htmlFor="">1.5 KG</label>
+                  </div>
+                  <div className="weight-check">
+                    <input
+                      type="checkbox"
+                      value="2"
+                      onChange={(e) => {
+                        handelWeightChecked(e);
+                      }}
+                    />
+                    <label htmlFor="">2 KG</label>
+                  </div>{" "}
+                  <div className="weight-check">
+                    <input
+                      type="checkbox"
+                      value="2.5"
+                      onChange={(e) => {
+                        handelWeightChecked(e);
+                      }}
+                    />
+                    <label htmlFor="">2.5 KG</label>
+                  </div>
+                  <div className="weight-check">
+                    <input
+                      type="checkbox"
+                      value="3"
+                      onChange={(e) => {
+                        handelWeightChecked(e);
+                      }}
+                    />
+                    <label htmlFor="">3 KG</label>
+                  </div>
+                  <div className="weight-check">
+                    <input
+                      type="checkbox"
+                      value="3.5"
+                      onChange={(e) => {
+                        handelWeightChecked(e);
+                      }}
+                    />
+                    <label htmlFor="">3.5 KG</label>
+                  </div>
+                </div>
+                <br />
+                <div className="product-category">
+                  <select
+                    onChange={(e) => {
+                      setCategory(e.target.value);
+                    }}
+                    required
+                  >
+                    <option value="">Choose Category</option>
+                    {Categories &&
+                      Categories.map((category) => {
+                        return (
+                          <option value={category._id}>
+                            {category.categoryName}
+                          </option>
+                        );
+                      })}
+                  </select>
+                </div>
+                <br />
+                <br />
+                <div className="product-image">
+                  <input
+                    type="file"
+                    accept="images/*"
+                    onChange={(e) => {
+                      handelImageChange(e);
+                    }}
+                  />
+                </div>
+                <div className="product-preview">
+                  {previewImage ? <img src={previewImage} alt="" /> : ""}
+                </div>
+
+                {productError ? (
+                  <div className="upload-error">
+                    <h1>{productError}</h1>
+                  </div>
+                ) : (
+                  ""
+                )}
+                {updateSuccess ? (
+                  <div className="upload-error">
+                    <h1>{message}</h1>
+                  </div>
+                ) : (
+                  ""
+                )}
+                <div className="add-product-form-btn">
+                  <button type="submit">Update Product</button>
+                </div>
+              </form>
+            </div>
+          </>
+        )}
+      </div>
+    </>
+  );
+};
+
+export default UpdateProducts;
+
+// path :- frontend\src\Pages\Admin\Product\ViewCategory\ViewCategory.jsx
+import React from "react";
+import Sidebar from "../../Components/Sidebar/Sidebar";
+import Header from "../../../../Components/Header/Header";
+import "../ViewsProducts/ViewProducts.css";
+import { useDispatch, useSelector } from "react-redux";
+import Loader from "../../../../Components/Loader/Loader";
+import { useEffect } from "react";
+import { deleteProductAction } from "../../../../Redux/Actions/productAction";
+import { FaTrash } from "react-icons/fa";
+import { HiPencilAlt } from "react-icons/hi";
+import { Link } from "react-router-dom";
+import {
+  deleteCategoryAction,
+  getAllCategoryAction,
+} from "../../../../Redux/Actions/categoryAction";
+
+const ViewCategory = () => {
+  const dispatch = useDispatch();
+  const {
+    loading,
+    Categories,
+    error: categoryError,
+  } = useSelector((state) => state.getAllCategory);
+
+  const {
+    loading: deleteLoading,
+    error: deleteCategoryError,
+    success: deleteSuccess,
+  } = useSelector((state) => state.deleteCategory);
+
+  //Delete Product
+  const deleteCategory = (id) => {
+    dispatch(deleteCategoryAction(id));
+  };
+
+  useEffect(() => {
+    dispatch(getAllCategoryAction());
+  }, [deleteSuccess]);
+
+  //Delete Product
+  const deleteProduct = (id) => {
+    dispatch(deleteProductAction(id));
+  };
+  //   if (deleteProductError) {
+  //     setTimeout(() => {
+  //       dispatch(clearError());
+  //     }, 5000);
+  //   }
+  return (
+    <>
+      <Header />
+      <Sidebar />
+      <div className="dashboard-container">
+        {loading || deleteLoading ? (
+          <Loader
+            LoadingName={
+              deleteLoading ? "Deleting Category" : "Fetching Category"
+            }
+          />
+        ) : (
+          <>
+            <div className="dashboard-sub-heading">
+              <h1>All Category</h1>
+            </div>
+            {/* {deleteSuccess ? <span>{"Product Deleted..!!"}</span> : ""}
+            {deleteProductError ? <span>{deleteProductError}</span> : ""} */}
+            <div className="products-table">
+              <table>
+                <thead>
+                  <th>Id</th>
+                  <th>Name</th>
+                  <th>Image</th>
+                  <th colSpan={2}>Actions</th>
+                </thead>
+                {Categories &&
+                  Categories.map((category) => {
+                    return (
+                      <tbody key={category._id}>
+                        <td>{category._id}</td>
+                        <td>{category.categoryName}</td>
+                        <td>
+                          <img
+                            src={category.categoryImage}
+                            alt="category Image"
+                          />
+                        </td>
+                        <td>
+                          <Link
+                            to={`/admin/update/category/${category._id}`}
+                            state={{
+                              categoryName: category.categoryName,
+                              categoryImage: category.categoryImage,
+                            }}
+                          >
+                            <HiPencilAlt />
+                          </Link>
+                        </td>
+                        <td
+                          onClick={() => {
+                            deleteCategory(category._id);
+                          }}
+                        >
+                          <FaTrash />
+                        </td>
+                      </tbody>
+                    );
+                  })}
+              </table>
+            </div>
+          </>
+        )}
+      </div>
+    </>
+  );
+};
+
+export default ViewCategory;
+
+// path :- frontend\src\Pages\Admin\Product\ViewProducts\ViewProducts.jsx
+import React from "react";
+import Sidebar from "../../Components/Sidebar/Sidebar";
+import Header from "../../../../Components/Header/Header";
+import "./ViewProducts.css";
+import { useDispatch, useSelector } from "react-redux";
+import Loader from "../../../../Components/Loader/Loader";
+import { useEffect } from "react";
+import {
+  clearError,
+  deleteProductAction,
+  getAllProductsAction,
+} from "../../../../Redux/Actions/productAction";
+import { FaTrash } from "react-icons/fa";
+import { HiPencilAlt } from "react-icons/hi";
+import { Link } from "react-router-dom";
+
+const ViewProducts = () => {
+  const dispatch = useDispatch();
+  const { loading, error, products } = useSelector(
+    (state) => state.getAllProducts
+  );
+  const {
+    loading: deleteLoading,
+    error: deleteProductError,
+    DeletedProduct,
+    success: deleteSuccess,
+  } = useSelector((state) => state.deleteProduct);
+
+  useEffect(() => {
+    dispatch(getAllProductsAction());
+  }, [deleteSuccess]);
+
+  //Delete Product
+  const deleteProduct = (id) => {
+    dispatch(deleteProductAction(id));
+  };
+
+  if (deleteProductError) {
+    setTimeout(() => {
+      dispatch(clearError());
+    }, 5000);
+  }
+
+  return (
+    <>
+      <Header />
+      <Sidebar />
+      <div className="dashboard-container">
+        {loading || deleteLoading ? (
+          <Loader
+            LoadingName={
+              deleteLoading ? "Deleting Product" : "Fetching Products"
+            }
+          />
+        ) : (
+          <>
+            <div className="dashboard-sub-heading">
+              <h1>All Products</h1>
+            </div>
+            {deleteSuccess ? <span>{"Product Deleted..!!"}</span> : ""}
+            {deleteProductError ? <span>{deleteProductError}</span> : ""}
+            <div className="products-table">
+              <table>
+                <thead>
+                  <th>Id</th>
+                  <th>Name</th>
+                  <th>Image</th>
+                  <th>Rate</th>
+                  <th>Category</th>
+                  <th>Stock</th>
+                  <th>Status</th>
+                  <th colSpan={2}>Actions</th>
+                </thead>
+                {products &&
+                  products.map((product) => {
+                    return (
+                      <tbody key={product._id}>
+                        <td>{product._id}</td>
+                        <td>{product.name}</td>
+                        <td>
+                          <img src={product.url} alt="product Image" />
+                        </td>
+                        <td>₹ {product.rate}/Kg</td>
+                        <td>{product.category.categoryName}</td>
+                        <td>{product.stocks}</td>
+                        <td
+                          style={{
+                            fontWeight: 500,
+                            textTransform: "uppercase",
+                            color: product.stocks <= 0 ? "red" : "green",
+                          }}
+                        >
+                          {product.stocks <= 0 ? "Out Of Stock" : "In Stock"}
+                        </td>
+
+                        <td>
+                          <Link
+                            to={`/admin/update/products/${product._id}`}
+                            state={{
+                              productName: product.name,
+                              productRate: product.rate,
+                              productStock: product.stocks,
+                              productCategory: product.category.categoryName,
+                              productImage: product.url,
+                              productWeight: product.kilogramOption,
+                            }}
+                          >
+                            <HiPencilAlt />
+                          </Link>
+                        </td>
+
+                        <td
+                          className="admin-delete-products-icon"
+                          onClick={() => {
+                            deleteProduct(product._id);
+                          }}
+                        >
+                          <FaTrash />
+                        </td>
+                      </tbody>
+                    );
+                  })}
+              </table>
+            </div>
+          </>
+        )}
+      </div>
+    </>
+  );
+};
+
+export default ViewProducts;
+
+// path :- frontend\src\Pages\Admin\Product\AdminProducts.jsx
+import React from "react";
+import { Link } from "react-router-dom";
+import Sidebar from "../Components/Sidebar/Sidebar";
+import Header from "../../../Components/Header/Header";
+import "./AdminProducts.css";
+
+const AdminProducts = () => {
+  return (
+    <>
+      <Header />
+      <Sidebar />
+      <div className="dashboard-container">
+        <br />
+        <div className="dashboard-sub-heading">
+          <h1>Admin Products</h1>
+        </div>
+        <div className="admin-products-actions">
+          <ul>
+            <Link to="/admin/add/products">
+              <li>Add Products</li>
+            </Link>
+            <Link to="/admin/view/products">
+              <li>View Products</li>
+            </Link>
+            <Link to="/admin/add/category">
+              <li>Add Category</li>
+            </Link>
+            <Link to="/admin/view/category">
+              {" "}
+              <li>View Category</li>
+            </Link>
+          </ul>
+        </div>
+      </div>
+    </>
+  );
+};
+
+export default AdminProducts;
+
+// path :- frontend\src\Pages\Admin\Reviews\ReviewsList.jsx
+import React from "react";
+import Sidebar from "../Components/Sidebar/Sidebar";
+import Header from "../../../Components/Header/Header";
+import { useDispatch, useSelector } from "react-redux";
+import Loader from "../../../Components/Loader/Loader";
+import { useEffect } from "react";
+import { FaTrash } from "react-icons/fa";
+import {
+  deleteReviewsAction,
+  getAllAdminReviewsAction,
+} from "../../../Redux/Actions/reviewsAction";
+
+const ReviewsList = () => {
+  const dispatch = useDispatch();
+  const {
+    loading,
+    reviews,
+    error: reviewsError,
+  } = useSelector((state) => state.adminGetReviews);
+
+  const {
+    loading: deleteReviewLoading,
+    error: deleteReviewError,
+    success: deleteReviewSuccess,
+  } = useSelector((state) => state.deleteReview);
+
+  //Delete Review
+  const deleteReview = (id) => {
+    dispatch(deleteReviewsAction(id));
+  };
+
+  useEffect(() => {
+    dispatch(getAllAdminReviewsAction());
+  }, [deleteReviewSuccess]);
+
+  return (
+    <>
+      <Header />
+      <Sidebar />
+      <div className="dashboard-container">
+        {loading || deleteReviewLoading ? (
+          <Loader
+            LoadingName={
+              deleteReviewLoading ? "Deleting Reviews" : "Fetching Reviews"
+            }
+          />
+        ) : (
+          <>
+            <div className="dashboard-sub-heading">
+              <h1>All Reviews</h1>
+            </div>
+            {/* {deleteSuccess ? <span>{"Product Deleted..!!"}</span> : ""}
+            {deleteProductError ? <span>{deleteProductError}</span> : ""} */}
+            <div className="products-table">
+              <table>
+                <thead>
+                  <th>Id</th>
+                  <th>Name</th>
+                  <th>Ratings</th>
+                  <th>Reviews</th>
+                  <th>Actions</th>
+                </thead>
+                {reviews &&
+                  reviews.map((review) => {
+                    return (
+                      <tbody key={review._id}>
+                        <td>{review._id}</td>
+                        <td>
+                          {review.user.firstName + " " + review.user.lastName}
+                        </td>
+                        <td>{review.ratings}</td>
+                        <td>{review.comment}</td>
+                        <td
+                          onClick={() => {
+                            deleteReview(review._id);
+                          }}
+                        >
+                          <FaTrash />
+                        </td>
+                      </tbody>
+                    );
+                  })}
+              </table>
+            </div>
+          </>
+        )}
+      </div>
+    </>
+  );
+};
+
+export default ReviewsList;
+
+// path :- frontend\src\Pages\Admin\Users\UpdateUser.jsx
+import React from "react";
+import { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useLocation } from "react-router-dom";
+import Header from "../../../Components/Header/Header";
+import {
+  adminUpdateUserAction,
+  clearError,
+} from "../../../Redux/Actions/userAction";
+import Sidebar from "../Components/Sidebar/Sidebar";
+
+const UpdateUser = () => {
+  const dispatch = useDispatch();
+  const Location = useLocation();
+  const { success, loading, updatedUser, message, error } = useSelector(
+    (state) => state.adminUpdateUser
+  );
+
+  const [userRole, setUserRole] = useState(
+    Location.state.userName ? Location.state.userName : ""
+  );
+
+  const [userId, setUserId] = useState(
+    Location.state.userId ? Location.state.userId : ""
+  );
+
+  const handelUpdateUserSubmit = (e) => {
+    e.preventDefault();
+    if (userRole === "") {
+      alert("Choose Role");
+    } else {
+      dispatch(adminUpdateUserAction(userId, userRole));
+    }
+  };
+
+  if (error) {
+    setInterval(() => {
+      dispatch(clearError());
+    }, 5000);
+  }
+
+  return (
+    <>
+      <Header />
+      <Sidebar />
+      <div className="dashboard-container">
+        <div className="dashboard-sub-heading">
+          <h1>Update User</h1>
+        </div>
+
+        <div className="add-product-form-box">
+          <form onSubmit={(e) => handelUpdateUserSubmit(e)}>
+            <div className="product-name">
+              <input
+                type="text"
+                value={Location.state.userName ? Location.state.userName : ""}
+                placeholder="User Name"
+                readOnly
+              />
+            </div>
+
+            <div className="product-name">
+              <input
+                type="text"
+                value={Location.state.userEmail ? Location.state.userEmail : ""}
+                placeholder="User email"
+                readOnly
+              />
+            </div>
+
+            <div className="product-name">
+              <input
+                type="text"
+                value={Location.state.userRole ? Location.state.userRole : ""}
+                placeholder="User role"
+                readOnly
+              />
+            </div>
+            <div className="product-category">
+              <select
+                onChange={(e) => {
+                  setUserRole(e.target.value);
+                }}
+                required
+              >
+                <option value="">Choose Role</option>
+                <option value="Admin">Admin</option>
+                <option value="User">User</option>
+              </select>
+            </div>
+
+            {error ? (
+              <div className="upload-error">
+                <h1>{error}</h1>
+              </div>
+            ) : (
+              ""
+            )}
+
+            {success ? (
+              <div className="upload-error">
+                <h1>{message}</h1>
+              </div>
+            ) : (
+              ""
+            )}
+
+            <div className="add-product-form-btn">
+              <button>Update Role</button>
+            </div>
+          </form>
+        </div>
+      </div>
+    </>
+  );
+};
+
+export default UpdateUser;
+
+// path :- frontend\src\Pages\Admin\Users\UsersList.jsx
+import React from "react";
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import Header from "../../../Components/Header/Header";
+import Loader from "../../../Components/Loader/Loader";
+import NotFoundCart from "../../../Components/NotFoundCart/NotFoundCart";
+import {
+  deleteUserAdminAction,
+  getAllUsersAdminAction,
+} from "../../../Redux/Actions/userAction";
+import Sidebar from "../Components/Sidebar/Sidebar";
+import { FaTrash } from "react-icons/fa";
+import { HiPencilAlt } from "react-icons/hi";
+import { Link } from "react-router-dom";
+
+const UsersList = () => {
+  const dispatch = useDispatch();
+  const { users, loading, error, success } = useSelector(
+    (state) => state.adminAllUsers
+  );
+
+  const {
+    loading: deleteLoading,
+    error: deleteError,
+    success: deleteSuccess,
+  } = useSelector((state) => state.adminDeleteUser);
+
+  const deleteUser = async (userId) => {
+    if (userId) {
+      dispatch(deleteUserAdminAction(userId));
+    }
+  };
+
+  useEffect(() => {
+    dispatch(getAllUsersAdminAction());
+  }, [deleteSuccess]);
+
+  return (
+    <>
+      <Header />
+      <Sidebar />
+      {loading || deleteLoading ? (
+        <Loader LoadingName={"Loading Users"} />
+      ) : success ? (
+        <div className="dashboard-container">
+          <div className="dashboard-sub-heading">
+            <h1>All Users</h1>
+          </div>
+          <div className="products-table">
+            <table>
+              <thead>
+                <th>Id</th>
+                <th>Name</th>
+                <th>Last Name</th>
+                <th>Email</th>
+                <th>Role</th>
+                <th colSpan={2}>Actions</th>
+              </thead>
+              {users &&
+                users.map((user) => {
+                  return (
+                    <tbody key={user._id}>
+                      <td>{user._id}</td>
+                      <td>{user.firstName}</td>
+                      <td>{user.lastName}</td>
+                      <td>{user.email}</td>
+                      <td>{user.role}</td>
+                      <td>
+                        <Link
+                          to={`/admin/update/${user._id}`}
+                          state={{
+                            userId: user._id,
+                            userEmail: user.email,
+                            userName: user.firstName + " " + user.lastName,
+                            userRole: user.role,
+                          }}
+                        >
+                          <HiPencilAlt />
+                        </Link>
+                      </td>
+                      <td
+                        className="admin-delete-products-icon"
+                        onClick={() => deleteUser(user._id)}
+                      >
+                        <FaTrash />
+                      </td>
+                    </tbody>
+                  );
+                })}
+            </table>
+          </div>
+        </div>
+      ) : (
+        <NotFoundCart msg={error} />
+      )}
+    </>
+  );
+};
+
+export default UsersList;
+
+// path :- frontend\src\Pages\CheckOut\Checkout.jsx
+import React from "react";
+import "./Checkout.css";
+import Footer from "../../Components/Footer/Footer";
+import Header from "../../Components/Header/Header";
+import { FaTrashRestore, FaShippingFast } from "react-icons/fa";
+import { MdOutlineMobileFriendly, MdOutlinePinDrop } from "react-icons/md";
+import { RxLetterCaseCapitalize } from "react-icons/rx";
+import { GoHome } from "react-icons/go";
+import { CgShoppingBag } from "react-icons/cg";
+import { useDispatch, useSelector } from "react-redux";
+
+import {
+  addToCartAction,
+  removeCartItemAction,
+} from "../../Redux/Actions/cartAction";
+import { useNavigate } from "react-router-dom";
+import { useState } from "react";
+import ConfirmOrder from "../ConfirmOrder/ConfirmOrder";
+
+const Checkout = () => {
+  const dispatch = useDispatch();
+  const Navigate = useNavigate();
+  const { user } = useSelector((state) => state.user);
+  const { cartItems } = useSelector((state) => state.userCart);
+  document.title = "Check Out";
+  //Cart SubTotal
+  const subTotal = cartItems.reduce(
+    (acc, item) => acc + item.rate * item.quantity,
+    0
+  );
+
+  const toggleCartSection = () => {
+    document.querySelectorAll("#cart-item").forEach((value) => {
+      value.classList.toggle("toggle-cart");
+    });
+  };
+
+  //Change Qty
+  const ChangeCartQty = (id, quantity) => {
+    dispatch(addToCartAction(id, quantity));
+  };
+
+  //Remove Cart Item
+  const RemoveCartItem = (id) => {
+    dispatch(removeCartItemAction(id));
+  };
+
+  //Collect Shipping Info
+  const [address, setAddress] = useState("");
+  const [city, setCity] = useState("");
+  const [mobileNumber, setMobileNumber] = useState("");
+  const [pinCode, setPinCode] = useState("");
+  const [validationError, setValidationError] = useState("");
+  const [shippingData, setShippingData] = useState({});
+  const [goToConfirm, setGoToConfirm] = useState(false);
+
+  const HandelCheckoutSubmit = (e) => {
+    e.preventDefault();
+    if (mobileNumber.length !== 10) {
+      setValidationError("Mobile Number Should Be 10 Digit..!!");
+    } else if (pinCode.length !== 6) {
+      setValidationError("Pin Code Should Be 6 Digit..!!");
+    } else {
+      if (address.trim().length == 0 || city.trim().length == 0) {
+        setValidationError("All Field Are Required..!!");
+      } else {
+        setShippingData({
+          address,
+          city,
+          mobileNumber,
+          pinCode,
+        });
+        setGoToConfirm(true);
+      }
+    }
+  };
+
+  if (validationError) {
+    setTimeout(() => {
+      setValidationError("");
+    }, 5000);
+  }
+  return (
+    <>
+      {goToConfirm ? (
+        <ConfirmOrder shippingInfo={shippingData} />
+      ) : (
+        <>
+          <Header />
+          <div className="checkout-container">
+            <h1 className="Heading">
+              Shipping<span>Details</span>
+            </h1>
+            <div
+              id="toggle-btn"
+              className="cart-toggle-btn"
+              onClick={toggleCartSection}
+            >
+              <CgShoppingBag />
+              <span>{cartItems && cartItems.length}</span>
+            </div>
+            <div className="checkout-box">
+              <div className="cart-item">
+                <div className="cart-item-box">
+                  <div className="total-cart-price">
+                    {cartItems.length === 0 ? (
+                      <>
+                        <h2 className="cart-empty">Your Cart Is Empty..!!</h2>
+                      </>
+                    ) : (
+                      <>
+                        <h2>Sub Total : ₹ {subTotal}</h2>
+                        <h2>
+                          Shipping Charge :{" "}
+                          <span className="freeShipping">{"Free"}</span>{" "}
+                        </h2>
+                        <h2>Total : ₹ {subTotal}</h2>
+                      </>
+                    )}
+                  </div>
+                </div>
+                {cartItems &&
+                  cartItems.map((item) => {
+                    return (
+                      <div
+                        className="cart-item-box"
+                        id="cart-item"
+                        key={item.id}
+                      >
+                        <img src={item.image} alt="Product Image" />
+                        <div>
+                          <h2>{item.name}</h2>
+                          <select
+                            onChange={(e) => {
+                              ChangeCartQty(item.id, e.target.value);
+                            }}
+                          >
+                            {item.kilogramOption.map((weight) => {
+                              return (
+                                <option value={weight.$numberDecimal}>
+                                  {weight.$numberDecimal} Kg
+                                </option>
+                              );
+                            })}
+                          </select>
+                          <h4> Rate : ₹ {item.rate}/Kg </h4>
+                        </div>
+                        <div className="">
+                          <h3>₹ {item.quantity * item.rate}</h3>
+                          <button
+                            onClick={() => {
+                              RemoveCartItem(item.id);
+                            }}
+                          >
+                            {<FaTrashRestore />}
+                          </button>
+                        </div>
+                      </div>
+                    );
+                  })}
+              </div>
+              {user && cartItems.length != 0 ? (
+                <div className="checkout-from ba">
+                  <div className="box">
+                    <div className="login-box">
+                      <form onSubmit={(e) => HandelCheckoutSubmit(e)}>
+                        <div className="user-email">
+                          <RxLetterCaseCapitalize />
+                          <input
+                            type="text"
+                            placeholder="Name"
+                            value={user.firstName + " " + user.lastName}
+                            required
+                            readOnly
+                          />
+                        </div>
+                        <div className="user-email">
+                          <GoHome />
+                          <input
+                            type="text"
+                            placeholder="Address"
+                            required
+                            onChange={(e) => setAddress(e.target.value)}
+                          />
+                        </div>
+                        <div className="user-email">
+                          <MdOutlinePinDrop />
+                          <input
+                            type="text"
+                            placeholder="City"
+                            required
+                            onChange={(e) => setCity(e.target.value)}
+                          />
+                        </div>
+                        <div className="user-email">
+                          <MdOutlineMobileFriendly />
+                          <input
+                            type="number"
+                            placeholder="Mobile Number"
+                            required
+                            onChange={(e) => setMobileNumber(e.target.value)}
+                          />
+                        </div>
+                        <div className="user-email">
+                          <FaShippingFast />
+                          <input
+                            type="number"
+                            placeholder="Pin Code"
+                            required
+                            onChange={(e) => setPinCode(e.target.value)}
+                          />
+                        </div>
+                        {validationError !== "" ? (
+                          <div className="validError">
+                            {" "}
+                            <span>{validationError}</span>{" "}
+                          </div>
+                        ) : (
+                          ""
+                        )}
+                        <button>Next</button>
+                      </form>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                <div className="cart-item-box checkOutLogin">
+                  <div className="total-cart-price">
+                    {
+                      <>
+                        <button
+                          className="checkOutLoginBtn"
+                          onClick={() =>
+                            Navigate(
+                              cartItems.length === 0 ? "/products" : "/Login"
+                            )
+                          }
+                        >
+                          {cartItems.length === 0 ? "Add Products" : `Login`}
+                        </button>
+                      </>
+                    }
+                  </div>
+                </div>
+              )}
+            </div>
+          </div>
+          )
+          <Footer />
+        </>
+      )}
+    </>
+  );
+};
+
+export default Checkout;
+
+// path :- frontend\src\Pages\ConfirmOrder\ConfirmOrder.jsx
+import React from "react";
+import { Link } from "react-router-dom";
+import Footer from "../../Components/Footer/Footer";
+import Header from "../../Components/Header/Header";
+import { useSelector } from "react-redux";
+import "./ConfirmOrder.css";
+import axios from "axios";
+import { useState } from "react";
+import Loader from "../../Components/Loader/Loader";
+import OrderPlace from "../OrderPlace/OrderPlace";
+
+const ConfirmOrder = ({ shippingInfo }) => {
+  const { user } = useSelector((state) => state.user);
+  const { cartItems } = useSelector((state) => state.userCart);
+  const subTotal = cartItems.reduce(
+    (acc, item) => acc + item.rate * item.quantity,
+    0
+  );
+  document.title = "Confirm Order";
+  const [orderLoading, setOrderLoading] = useState(false);
+  const [isOrderPlace, setIsOrderPlace] = useState(false);
+  const send = async () => {
+    if (user) {
+      try {
+        setOrderLoading(true);
+        const { data } = await axios.post(`/api/user/new/order`, {
+          cartItems,
+          shippingInfo,
+          userId: user._id,
+          total: subTotal,
+        });
+        setIsOrderPlace(true);
+        setOrderLoading(false);
+      } catch (error) {
+        alert(error.data.response.message);
+        setIsOrderPlace(false);
+        setOrderLoading(false);
+      }
+    } else {
+      alert("Login Please..!!");
+    }
+  };
+
+  return (
+    <>
+      {isOrderPlace ? (
+        <OrderPlace />
+      ) : (
+        <>
+          <Header />
+          {orderLoading ? (
+            <Loader LoadingName={"Placing Order"} />
+          ) : (
+            <>
+              {cartItems.length != 0 && shippingInfo && user ? (
+                <div className="confirm-order-section">
+                  <div className="order-summary-section">
+                    <h1>Order Summary</h1>
+                    <div className="product-summary">
+                      <table>
+                        <thead>
+                          <th>Name</th>
+                          <th>Quantity</th>
+                          <th>Rate</th>
+                          <th>Subtotal</th>
+                        </thead>
+                        {cartItems &&
+                          cartItems.map((product) => {
+                            return (
+                              <tbody>
+                                <td>{product.name}</td>
+                                <td>{product.quantity}Kg</td>
+                                <td> ₹ {product.rate}</td>
+                                <td className="subtotal">
+                                  {product.quantity} x {product.rate} = ₹{" "}
+                                  {product.quantity * product.rate}
+                                </td>
+                              </tbody>
+                            );
+                          })}
+                      </table>
+                    </div>
+                    <div className="shipping-details-summary">
+                      <h1>Shipping Info</h1>
+                      <table>
+                        <thead>
+                          <th>Name</th>
+                          <th>Address</th>
+                          <th>City</th>
+                          <th>Pin Code</th>
+                          <th>Mobile Number</th>
+                        </thead>
+                        <tbody>
+                          <td>{user.firstName + " " + user.lastName}</td>
+                          <td>{shippingInfo.address}</td>
+                          <td>{shippingInfo.city}</td>
+                          <td>{shippingInfo.pinCode}</td>
+                          <td>{shippingInfo.mobileNumber}</td>
+                        </tbody>
+                      </table>
+                    </div>
+                    <div className="payment-summary">
+                      <div>
+                        <h6>
+                          Subtotal : <span> ₹ {subTotal}</span>
+                        </h6>
+                        <h6 className="free-shipping">Free Shipping For You</h6>
+                        <h6 className="total">
+                          Total : <span> ₹ {subTotal} </span>
+                        </h6>
+                      </div>
+                    </div>
+                    <div className="confirm-order-btn">
+                      <button className="cOrder" onClick={send}>
+                        Confirm Order
+                      </button>
+                      <Link to="/Order/Checkout">
+                        <button>Cancel Order</button>
+                      </Link>
+                    </div>
+                  </div>
+                </div>
+              ) : (
+                ""
+              )}
+            </>
+          )}
+          <Footer />
+        </>
+      )}
+    </>
+  );
+};
+
+export default ConfirmOrder;
+
+// path :- frontend\src\Pages\Home\Home.jsx
+import React from "react";
+import "./Home.css";
+import Header from "../../Components/Header/Header";
+import freshFruits from "../../Assets/Images/freshFruits.png";
+import featureImg1 from "../../Assets/Images/feature-img-1.png";
+import featureImg2 from "../../Assets/Images/feature-img-2.png";
+import featureImg3 from "../../Assets/Images/feature-img-3.png";
+import { FaStar } from "react-icons/fa";
+import "../../Assets/js/script";
+import { Swiper, SwiperSlide } from "swiper/react";
+import { Autoplay, Navigation } from "swiper";
+import { Link, useNavigate } from "react-router-dom";
+import Footer from "../../Components/Footer/Footer";
+import { useDispatch, useSelector } from "react-redux";
+import Loader from "../../Components/Loader/Loader";
+import { useEffect } from "react";
+import { getAllCategoryAction } from "../../Redux/Actions/categoryAction";
+import { getAllReviewsAction } from "../../Redux/Actions/reviewsAction";
+import axios from "axios";
+import { useState } from "react";
+
+const Home = () => {
+  const dispatch = useDispatch();
+  const Navigate = useNavigate();
+
+  //getting user from user
+  const { loading: userLoading, user } = useSelector((state) => state.user);
+
+  //getting category from state
+  const { loading: categoryLoading, Categories } = useSelector(
+    (state) => state.getAllCategory
+  );
+
+  //getting all Reviews from state
+  const {
+    reviews,
+    loading: reviewsLoading,
+    error,
+  } = useSelector((state) => state.getAllReviews);
+
+  //Get Recent Products
+  const [recentProductLoading, setRecentLoading] = useState(false);
+  const [recentProductsError, setRecentProductsError] = useState(false);
+  const [recentProductsSuccess, setRecentProductsSuccess] = useState(false);
+  const [recentProducts, setRecentProducts] = useState([]);
+
+  const getRecentProducts = async () => {
+    try {
+      setRecentLoading(true);
+      const { data } = await axios.get("/api/product/recent/products");
+      setRecentProducts(data.products);
+      setRecentLoading(false);
+      setRecentProductsSuccess(true);
+      setRecentLoading(false);
+    } catch (error) {
+      setRecentLoading(false);
+      setRecentProductsError(true);
+      // console.log(error);
+    }
+  };
+
+  useEffect(() => {
+    document.title = "Home";
+    dispatch(getAllCategoryAction());
+    dispatch(getAllReviewsAction());
+    getRecentProducts();
+  }, [dispatch]);
+
+  const options = {
+    slidesPerView: 1,
+    spaceBetween: 10,
+    loop: true,
+    autoplay: {
+      delay: 5000,
+    },
+    breakpoints: {
+      640: {
+        slidesPerView: 2,
+        spaceBetween: 20,
+      },
+      768: {
+        slidesPerView: 2,
+        spaceBetween: 40,
+      },
+      1024: {
+        slidesPerView: 3,
+        spaceBetween: 50,
+      },
+    },
+    // navigation: true,
+    modules: [Autoplay, Navigation],
+    className: "mySwiper",
+  };
+
+  return (
+    <>
+      <Header />
+
+      {userLoading ||
+      categoryLoading ||
+      reviewsLoading ||
+      recentProductLoading ? (
+        <Loader LoadingName={"Loading Home"} />
+      ) : (
+        <>
+          <div className="main-home">
+            <section className="home">
+              <div className="content">
+                <h3>
+                  Fresh And <span>Organic</span> Products For You
+                </h3>
+                <p>
+                  We respect your taste and tradition and so we are proud to say
+                  that we are a local company. We do not sell products which are
+                  of low quality but highly priced.
+                </p>
+                <Link to="/products">
+                  {" "}
+                  <button className="shopNowBtn">Shop Now</button>{" "}
+                </Link>
+              </div>
+            </section>
+          </div>
+
+          {/* Our Features */}
+
+          <section className="features" id="features">
+            <h1 className="Heading">
+              Our <span>Features</span>
+            </h1>
+            <div className="box-container">
+              <div className="box">
+                <img src={featureImg1} alt="" />
+                <h3>Fresh And Organic</h3>
+                <p>
+                  Fresh And Organic Delivery We Make Your Life Easy By
+                  Delivering Grocery, Fruits And Dairy Products Well Have All
+                  Single Platform And Are Committed To Serving You With Best
+                  Quality Products
+                </p>
+              </div>
+
+              <div className="box">
+                <img src={featureImg2} alt="" />
+                <h3>Free Delivery</h3>
+                <p>
+                  {" "}
+                  We Are Doing FREE Shipping All Over India Add Your Favorites
+                  Products To Cart And Enjoy Assured Low Price Delivery
+                </p>
+              </div>
+
+              <div className="box">
+                <img src={featureImg3} alt="" />
+                <h3>Cash On Delivery</h3>
+                <p>
+                  We Offer Cash On Delivery...!! <br /> You Can Pay When Your
+                  Products Is Delivered.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          {/* Our Products */}
+          <section className="top-products">
+            <h1 className="Heading">
+              New<span>Products</span>
+            </h1>
+            <div className="product-slider">
+              <Swiper {...options}>
+                <div className="wrapper">
+                  {recentProducts.length !== 0 &&
+                  recentProductsSuccess == true ? (
+                    <>
+                      {recentProducts.map((item) => {
+                        return (
+                          <SwiperSlide key={item._id}>
+                            <div className="box">
+                              <img src={item.url} alt="" />
+                              <h1>{item.name}</h1>
+                              <div className="price"> Rate : ₹ {item.rate}</div>
+                              <button
+                                className="shopNowBtn"
+                                onClick={() => {
+                                  Navigate(`/products/${item.name}`);
+                                }}
+                              >
+                               View Product
+                              </button>
+                            </div>
+                          </SwiperSlide>
+                        );
+                      })}
+                    </>
+                  ) : (
+                    ""
+                  )}
+                </div>
+              </Swiper>
+            </div>
+          </section>
+
+          <section className="categories" id="categories">
+            <h1 className="Heading">
+              Product<span>Categories</span>
+            </h1>
+            <div className="category-box-container">
+              {Categories &&
+                Categories.map((category) => {
+                  return (
+                    <div className="box" key={category._id}>
+                      <img src={category.categoryImage} alt="" />
+                      <h1>Fresh {category.categoryName}</h1>
+                      <br />
+                      <Link
+                        to={`/products?categoryId=${category._id}&categoryName=${category.categoryName}`}
+                        className="shopNowBtn"
+                      >
+                        Shop Now
+                      </Link>
+                    </div>
+                  );
+                })}
+            </div>
+          </section>
+
+          <section className="top-products" id="reviews">
+            <h1 className="Heading">
+              Customer <span>Reviews</span>
+            </h1>
+            <div className="product-slider">
+              <Swiper {...options}>
+                <div className="wrapper">
+                  {reviews &&
+                    reviews.map((review) => {
+                      return (
+                        <SwiperSlide key={review._id}>
+                          <div className="box reviews-box">
+                            {/* <img src={pic1} alt="" /> */}
+                            <h1>
+                              {" "}
+                              {review.user.firstName +
+                                " " +
+                                review.user.lastName}
+                            </h1>
+                            <div className="price">{review.comment}</div>
+                            <div className="stars">
+                              <i>{<FaStar />}</i>
+                              <i>{<FaStar />}</i>
+                              <i>{<FaStar />}</i>
+                              <i>{<FaStar />}</i>
+                              <i>{<FaStar />}</i>
+                            </div>
+                          </div>
+                        </SwiperSlide>
+                      );
+                    })}
+                </div>
+              </Swiper>
+            </div>
+          </section>
+          <br />
+          <br />
+          <br />
+        </>
+      )}
+
+      <Footer />
+    </>
+  );
+};
+
+export default Home;
+
+// path :- frontend\src\Pages\Login\Login.jsx
+import React, { useRef } from "react";
+import "./Login.css";
+import { Link, useNavigate } from "react-router-dom";
+import Footer from "../../Components/Footer/Footer";
+import Header from "../../Components/Header/Header";
+import { MdOutlineMarkEmailRead } from "react-icons/md";
+import { VscEye, VscEyeClosed } from "react-icons/vsc";
+import { userLoginAction, clearError } from "../../Redux/Actions/userAction";
+import { useDispatch, useSelector } from "react-redux";
+import Loader from "../../Components/Loader/Loader";
+import { useEffect } from "react";
+
+const Login = () => {
+  const dispatch = useDispatch();
+  const Navigate = useNavigate();
+
+  const passwordToggle = useRef();
+  const { error, success, loading } = useSelector((state) => state.user);
+
+  const TogglePass = () => {
+    const filedType = passwordToggle.current.type;
+    passwordToggle.current.type =
+      filedType === "password" ? "text" : "password";
+  };
+  const handelLoginSubmit = (e) => {
+    e.preventDefault();
+
+    const email = document.login_form.email.value;
+    const password = document.login_form.password.value;
+    const userData = {
+      email,
+      password,
+    };
+    dispatch(userLoginAction(userData));
+  };
+
+  useEffect(() => {
+    document.title = "Login";
+  }, [success]);
+
+  if (error) {
+    setTimeout(() => {
+      dispatch(clearError());
+    }, 5000);
+  }
+
+  return (
+    <>
+      <Header />
+      {loading ? (
+        <Loader LoadingName={"Validating Data"} />
+      ) : (
+        <div className="login-container">
+          <h1 className="Heading regHeading">
+            User <span>Login</span>
+          </h1>
+          <div className="box">
+            <div className="login-box">
+              <form
+                name="login_form"
+                onSubmit={(e) => {
+                  handelLoginSubmit(e);
+                }}
+              >
+                <div className="user-email">
+                  <MdOutlineMarkEmailRead />
+                  <input
+                    type="email"
+                    placeholder="Email"
+                    required
+                    name="email"
+                  />
+                </div>
+                <div className="user-password">
+                  <VscEyeClosed />
+                  <input
+                    type="password"
+                    placeholder="Password"
+                    required
+                    ref={passwordToggle}
+                    name="password"
+                  />
+                  <i className="showPassword" onClick={TogglePass}>
+                    <VscEye />
+                  </i>
+                </div>
+
+                {error ? (
+                  <div className="validError">
+                    {" "}
+                    <span>{error}</span>{" "}
+                  </div>
+                ) : (
+                  ""
+                )}
+
+                <div className="user-links">
+                  <Link to="/Forget/Password">Forget's Password</Link>
+                  <Link to="/Signup">Not A User ? Sign Up</Link>
+                </div>
+                <button>Login</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+      <Footer />
+    </>
+  );
+};
+
+export default Login;
+
+// path :- frontend\src\Pages\OrderPlace\OrderPlace.jsx
+import React from "react";
+import "./OrderPlace.css";
+import Footer from "../../Components/Footer/Footer";
+import Header from "../../Components/Header/Header";
+import { useDispatch, useSelector } from "react-redux";
+import { RiEmotionHappyLine } from "react-icons/ri";
+import { Link } from "react-router-dom";
+import { CLEAR_CART_ITEM } from "../../Redux/Constants/cartConstants";
+import { useEffect } from "react";
+
+const OrderPlace = () => {
+  const dispatch = useDispatch();
+  const { user } = useSelector((state) => state.user);
+
+  useEffect(() => {
+    document.title = "Order Place..!!";
+    localStorage.setItem("userCart", []);
+    dispatch({ type: CLEAR_CART_ITEM });
+  }, []);
+
+  return (
+    <>
+      <Header />
+      <div className="order-place-container">
+        <div className="order-place-box">
+          <div className="order-place-cart">
+            <i>
+              <RiEmotionHappyLine />
+            </i>
+            <div className="order-place-heading">
+              <h2>{`Thanks ${user.firstName} `} </h2>
+              <h2>Your Order Is Place SuccessFully..!!</h2>
+            </div>
+
+            <div className="order-place-btn">
+              <Link to={"/"}>
+                <button>Home</button>
+              </Link>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <Footer />
+    </>
+  );
+};
+
+export default OrderPlace;
+
+// path :- frontend\src\Pages\Orders\AllOrders.jsx
+import React, { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { getUserOrderReducer } from "../../Redux/Reducers/ordersReducer";
+import { getUsersOrdersAction } from "../../Redux/Actions/orderActions";
+import Loader from "../../Components/Loader/Loader";
+import { Link } from "react-router-dom";
+import Header from "../../Components/Header/Header";
+import Footer from "../../Components/Footer/Footer";
+import { useState } from "react";
+
+const AllOrders = () => {
+  const dispatch = useDispatch();
+
+  const { user, loading: userLoading } = useSelector((state) => state.user);
+  const { orders, loading: ordersLoading } = useSelector(
+    (state) => state.getAllOrders
+  );
+
+  let deliveryOrderCount = 0;
+  let ShippedOrderCount = 0;
+  if (orders) {
+    let deliveryOrder = orders
+      .map((orderInfo) => {
+        return orderInfo.status === "Delivered";
+      })
+      .filter((status) => {
+        return status != false;
+      });
+
+    deliveryOrderCount = deliveryOrder.length;
+    let shippedOrder = orders
+      .map((orderInfo) => {
+        return orderInfo.status === "Shipped";
+      })
+      .filter((status) => {
+        return status != false;
+      });
+    ShippedOrderCount = shippedOrder.length;
+  }
+  useEffect(() => {
+    if (user && user._id) {
+      document.title = `${user.firstName} Orders`;
+      dispatch(getUsersOrdersAction(user._id));
+    }
+  }, [user]);
+  return (
+    <>
+      <Header />
+      {ordersLoading || userLoading ? (
+        <Loader LoadingName={"Loading Orders"} />
+      ) : (
+        <div className="orders-container ">
+          <h1 className="Heading">
+            {user && user.firstName ? user.firstName : "Orders"}{" "}
+            <span>All Orders </span>
+          </h1>
+
+          <div className="orders-box">
+            <div className="orders-cart-item">
+              <div className="orders-cart-item-box">
+                <div className="orders-total-cart-price">
+                  {orders && orders.length === 0 ? (
+                    <h2 className="not-place-order">
+                      You Not Place Any Order Yet..!!
+                    </h2>
+                  ) : (
+                    <>
+                      <h2>Total Orders : {orders && orders.length} </h2>
+                      <h2 className="delivered-order-count">
+                        Delivered Orders : {deliveryOrderCount}
+                      </h2>
+                      <h2 className="shipped-order-count">
+                        Shipped Orders : {ShippedOrderCount}{" "}
+                      </h2>
+                    </>
+                  )}
+                </div>
+              </div>
+              {orders &&
+                orders.map((orderInfo) => {
+                  return (
+                    <div className="orders-cart-item-box" key={orderInfo._id}>
+                      <div>
+                        <Link to={`/Order/OrderDetails/${orderInfo._id}`}>
+                          <h2 className="get-order-link">Get Order Details</h2>
+                        </Link>
+                        <h4> Total Items : {orderInfo.orderItems.length} </h4>
+                        <h4> Shipping Charge: 0 </h4>
+                      </div>
+                      <div className="">
+                        <h3>₹ {orderInfo.total}</h3>
+                        <h3
+                          className={
+                            orderInfo.status === "Processing"
+                              ? "order-processing-status"
+                              : orderInfo.status === "Shipped"
+                              ? "order-shipping-status"
+                              : "order-delivered-status"
+                          }
+                        >
+                          {orderInfo.status}
+                        </h3>
+
+                        <span className="order-date">
+                          {orderInfo.orderDate}
+                        </span>
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+          </div>
+        </div>
+      )}
+      <Footer />
+    </>
+  );
+};
+
+export default AllOrders;
+
+
+// path :- frontend\src\Pages\Orders\MyOrders.jsx
+import React from "react";
+import { useSearchParams } from "react-router-dom";
+import AllOrders from "./AllOrders";
+import OrderDetails from "./OrderDetails";
+
+const MyOrders = () => {
+  const [SearchParams, setUseSearchParams] = useSearchParams();
+  const orderId = SearchParams.get("orderId");
+  const orderStatus = SearchParams.get("orderStatus");
+
+  return <>{orderId ? <OrderDetails orderId={orderId} /> : <AllOrders />}</>;
+};
+
+export default MyOrders;
+
+// path :- frontend\src\Pages\Orders\OrderDetails.jsx
+import React, { useEffect } from "react";
+import "./Orders.css";
+import Footer from "../../Components/Footer/Footer";
+import Header from "../../Components/Header/Header";
+import { useDispatch, useSelector } from "react-redux";
+import Loader from "../../Components/Loader/Loader";
+import { getUsersOrderDetailsAction } from "../../Redux/Actions/orderActions";
+import { useParams, useSearchParams } from "react-router-dom";
+import NotFoundCart from "../../Components/NotFoundCart/NotFoundCart";
+
+const OrderDetails = () => {
+  const {
+    loading: orderLoading,
+    order,
+    error: orderError,
+  } = useSelector((state) => state.getOrderDetails);
+  const dispatch = useDispatch();
+  const { orderId } = useParams();
+  const [searchParams, setSearchParams] = useSearchParams();
+  const orderStatus = searchParams.get("status");
+
+  useEffect(() => {
+    if (orderId) {
+      document.title = `Orders Details`;
+      dispatch(getUsersOrderDetailsAction(orderId));
+    }
+  }, [orderId]);
+  return (
+    <>
+      <Header />
+      {orderLoading ? (
+        <Loader LoadingName={"Order Loading"} />
+      ) : orderError ? (
+        <>
+          <NotFoundCart msg={"Something Went To Wrong"} />
+        </>
+      ) : order && order.orderItems ? (
+        <>
+          <div className="orders-container "></div>
+          <h1 className="Heading">
+            {/* {user && user.firstName ? user.firstName : "Orders"}{" "} */}
+            Orders <span> Details</span>
+          </h1>
+          <div className="orders-box">
+            <div className="orders-cart-item">
+              <div className="orders-cart-item-box">
+                <div className="orders-total-cart-price">
+                  <h2>Order Items : {order && order.orderItems.length} </h2>
+                  <h2 className="">Total Amount : ₹ {order && order.total} </h2>
+                </div>
+              </div>
+              {order &&
+                order.orderItems.map((item) => {
+                  return (
+                    <div className="orders-cart-item-box" key={item._id}>
+                      <img src={item.image} alt="Product Image" />
+                      <div>
+                        <h2>{item.name}</h2>
+                        <h4> Quantity : {item.quantity} KG </h4>
+                        <h4> Rate : ₹ {item.rate}/Kg </h4>
+                      </div>
+                      <div className="">
+                        <h3>₹ {item.rate * item.quantity}</h3>
+                        <h3
+                          className={
+                            order.status === "Processing"
+                              ? "order-processing-status"
+                              : order.status === "Shipped"
+                              ? "order-shipping-status"
+                              : "order-delivered-status"
+                          }
+                        >
+                          {order.status}
+                        </h3>
+                        <span className="order-date"> {order.orderDate}</span>
+                      </div>
+                    </div>
+                  );
+                })}
+            </div>
+          </div>
+        </>
+      ) : (
+        <NotFoundCart msg={" Sorry Order Not Exit"} />
+      )}
+
+      <Footer />
+    </>
+  );
+};
+
+export default OrderDetails;
+
+
+
+// path :- frontend\src\Pages\Product\Product.jsx
+import React from "react";
+import "./Product.css";
+import Header from "../../Components/Header/Header";
+import { BsCartXFill } from "react-icons/bs";
+import { FaCartPlus } from "react-icons/fa";
+import { BiSortUp } from "react-icons/bi";
+import Footer from "../../Components/Footer/Footer";
+import { useRef } from "react";
+import { useEffect } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { getAllProductsAction } from "../../Redux/Actions/productAction";
+import Loader from "../../Components/Loader/Loader";
+import { addToCartAction } from "../../Redux/Actions/cartAction";
+import { useState } from "react";
+import { getAllCategoryAction } from "../../Redux/Actions/categoryAction";
+import NotFoundCart from "../../Components/NotFoundCart/NotFoundCart";
+import { useParams, useSearchParams } from "react-router-dom";
+
+const Products = () => {
+  const dispatch = useDispatch();
+  const [headingCategory, setHeadingCategory] = useState("Products");
+  const [searchParams, setSearchParams] = useSearchParams();
+
+  //Get Product From State
+  const {
+    loading,
+    products,
+    productsCount,
+    error: productError,
+  } = useSelector((state) => state.getAllProducts);
+
+  //Get Category From State
+  const {
+    loading: categoryLoading,
+    Categories,
+    success,
+    error: categoryError,
+  } = useSelector((state) => state.getAllCategory);
+
+  //Get Cart Item
+  const { cartItems } = useSelector((state) => state.userCart);
+
+  //Filter Product
+  const [FilterCategory, setFilterCategory] = useState([]);
+  const [price, setPrice] = useState("0-10000");
+  const [ApplyError, setApplyError] = useState();
+  const [clearFilter, setClearFilter] = useState(false);
+
+  const handelCategoryClick = (e, category) => {
+    if (FilterCategory.includes(category)) {
+      const categoryIndexNum = FilterCategory.indexOf(category);
+      FilterCategory.splice(categoryIndexNum, 1);
+      e.target.classList.remove("selected-category");
+    } else {
+      FilterCategory.push(category);
+      e.target.classList.add("selected-category");
+    }
+  };
+
+  const ApplyFilterBtnClick = () => {
+    if (price || FilterCategory.length != 0) {
+      dispatch(getAllProductsAction(price, FilterCategory));
+      setFilterCategory([]);
+      setPrice();
+      setApplyError();
+      setClearFilter(true);
+      setHeadingCategory("Products");
+    } else {
+      setApplyError("Please Select Filters..!!");
+      setTimeout(() => {
+        setApplyError(setApplyError());
+      }, 5000);
+    }
+  };
+
+  //Clear Filter
+  const clearFilterBtnClick = () => {
+    if (clearFilter) {
+      dispatch(getAllProductsAction());
+      dispatch(getAllCategoryAction());
+      setClearFilter(false);
+      setHeadingCategory("Products");
+    }
+  };
+
+  //Add Product To Cart
+  const [quantity, setQuantity] = useState(0.5);
+  const AddToCart = (id) => {
+    dispatch(addToCartAction(id, quantity));
+  };
+
+  // Toggle Filter Section
+  const filterSection = useRef();
+  const toggleFilterSection = () => {
+    filterSection.current.classList.toggle("toggle-filter");
+  };
+
+  //Get Search Keyword && Category
+  const { keyword } = useParams();
+  const categoryId = searchParams.get("categoryId");
+  const categoryName = searchParams.get("categoryName");
+
+  useEffect(() => {
+    document.title = `Fresh Products`;
+    if (keyword) {
+      dispatch(getAllProductsAction(price, FilterCategory, keyword));
+      dispatch(getAllCategoryAction());
+      setHeadingCategory("Product");
+    } else if (categoryId) {
+      dispatch(getAllProductsAction(price, categoryId, keyword));
+      dispatch(getAllCategoryAction());
+      setHeadingCategory(categoryName);
+    } else {
+      dispatch(getAllProductsAction());
+      dispatch(getAllCategoryAction());
+      setHeadingCategory("Products");
+    }
+  }, [keyword, categoryId]);
+
+  return (
+    <>
+      <Header />
+      {(loading && categoryLoading) || loading ? (
+        <Loader LoadingName={"Fetching Products"} />
+      ) : (
+        <div className="products-container">
+          <h1 className="Heading regHeading">
+            Fresh <span>{headingCategory}</span>
+          </h1>
+          {productError || categoryError ? (
+            <>
+              <NotFoundCart msg={"Something Went's To Wrong"} />
+              <br />
+            </>
+          ) : (
+            <>
+              <a href="#filter-section">
+                <div
+                  id="toggle-btn"
+                  className="cart-toggle-btn"
+                  onClick={toggleFilterSection}
+                >
+                  <BiSortUp />
+                  <span>Filter</span>
+                </div>
+              </a>
+              <div
+                className="products-filter"
+                id="filter-section"
+                ref={filterSection}
+              >
+                {""}
+                <div className="category-box">
+                  <h2>Categories</h2>
+                  <ul>
+                    {Categories &&
+                      Categories.map((category) => {
+                        return (
+                          <li
+                            key={category._id}
+                            onClick={(e) => {
+                              handelCategoryClick(e, category._id);
+                            }}
+                          >
+                            {" "}
+                            Fresh {category.categoryName}
+                          </li>
+                        );
+                      })}
+                  </ul>
+                </div>
+
+                <div className="price-filter">
+                  <h2>Price</h2>
+                  <select onChange={(e) => setPrice(e.target.value)}>
+                    <option value="">Price Range</option>
+                    <option value="0-20">₹ 0 - ₹ 20/Kg</option>
+                    <option value="20-40">₹ 20 - ₹ 40/Kg</option>
+                    <option value="40-60">₹ 40 - ₹ 60/Kg</option>
+                    <option value="60-80">₹ 60 - ₹ 80/Kg</option>
+                    <option value="80-100">₹ 80 - ₹ 100/Kg</option>
+                    <option value="100-120">₹ 100 - ₹ 120/Kg</option>
+                  </select>
+                </div>
+
+                <div className="filter-btn">
+                  <button onClick={ApplyFilterBtnClick}>Apply Filter</button>
+                  {clearFilter ? (
+                    <button
+                      className="clearFilterBtn"
+                      onClick={clearFilterBtnClick}
+                    >
+                      Clear Filter
+                    </button>
+                  ) : (
+                    ""
+                  )}
+
+                  {ApplyError ? (
+                    <h6 className="applyFilterError ">
+                      Please Select Filter First..!!
+                    </h6>
+                  ) : (
+                    ""
+                  )}
+                </div>
+
+                {""}
+              </div>
+
+              <div className="products-list">
+                {products.length !== 0 ? (
+                  <div className="products-list-box">
+                    {products &&
+                      products.map((product) => {
+                        return (
+                          <div className="product-cart" key={product._id}>
+                            {cartItems.map((item) => {
+                              return item.name === product.name ? (
+                                <span className="product-cart-item-qty">
+                                  {item.quantity} kg in cart
+                                </span>
+                              ) : (
+                                ""
+                              );
+                            })}
+
+                            <img src={product.url} alt="" />
+                            <h2>{product.name}</h2>
+                            <div className="price">₹ {product.rate}/Kg</div>
+                            <div className="product-qty">
+                              {product.stocks <= 0 ? (
+                                <h5 className="product-out-of-stock">
+                                  OUT OF STOCK {""}
+                                  <BsCartXFill />
+                                </h5>
+                              ) : (
+                                <>
+                                  <select
+                                    onChange={(e) => {
+                                      setQuantity(e.target.value);
+                                    }}
+                                  >
+                                    {product.kilogramOption.map((weight) => {
+                                      return (
+                                        <option value={weight.$numberDecimal}>
+                                          {weight.$numberDecimal} Kg
+                                        </option>
+                                      );
+                                    })}
+                                  </select>
+                                  <button
+                                    onClick={() => {
+                                      AddToCart(product._id);
+                                    }}
+                                  >
+                                    <FaCartPlus />
+                                  </button>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        );
+                      })}
+                  </div>
+                ) : (
+                  <NotFoundCart msg={"Sorry Products Not Found"} />
+                )}
+              </div>
+            </>
+          )}
+        </div>
+      )}
+      <Footer />
+    </>
+  );
+};
+
+export default Products;
+
+
+// path :- frontend\src\Pages\Reviews\AddReviews.jsx
+import React from "react";
+import Footer from "../../Components/Footer/Footer";
+import Header from "../../Components/Header/Header";
+import { MdClose } from "react-icons/md";
+import "./Reviews.css";
+import { useState, useRef } from "react";
+import axios from "axios";
+import Loader from "../../Components/Loader/Loader";
+import { Rating } from "@material-ui/lab";
+import { useSelector } from "react-redux";
+const AddReviews = () => {
+  const RegisterSuccess = useRef();
+  const { loading: userLoading, user } = useSelector((state) => state.user);
+  const [comment, setComment] = useState("");
+  const [ratings, setRatings] = useState(0);
+  const [validationError, setValidationError] = useState();
+  const [addError, setAddError] = useState(null);
+  const [addLoading, setAddLoading] = useState(false);
+  const [AddSuccess, setAddSuccess] = useState(true);
+  const [message, setMessage] = useState(null);
+
+  document.title = `Add Review`;
+
+  //Add Reviews
+  const addReviewsHandel = async () => {
+    try {
+      if (comment.trim().length !== 0 && ratings !== 0) {
+        setAddLoading(true);
+        const { data } = await axios.post("/api/user/add/review", {
+          comment,
+          ratings,
+        });
+
+        setAddLoading(false);
+        setAddSuccess(data.success);
+        setMessage(data.message);
+      } else {
+        setValidationError("All Field Are Required..!!");
+      }
+    } catch (error) {
+      setAddLoading(false);
+      setAddSuccess(false);
+      setAddError(error.response.data.message);
+    }
+  };
+  if (validationError) {
+    setTimeout(() => {
+      setValidationError(null);
+    }, 5000);
+  }
+  const closeRegisterPop = () => {
+    RegisterSuccess.current.style.display = "none";
+  };
+  return (
+    <>
+      <Header />
+      {addLoading || userLoading ? (
+        <Loader LoadingName={"Processing Reviews"} />
+      ) : (
+        <div className="reviews-container-section">
+          <h1 className="Heading regHeading">
+            Add <span>Reviews</span>
+          </h1>
+          {message ? (
+            <div className="RegisterSuccess" ref={RegisterSuccess}>
+              <div className="pop-card">
+                <button id="close-btn" onClick={closeRegisterPop}>
+                  <MdClose />
+                </button>
+                <div className="successLoader">
+                  <h3 className="loader-text"></h3>
+                </div>
+                <h1>{message}</h1>
+              </div>
+            </div>
+          ) : (
+            ""
+          )}
+          <div className="add-reviews-box">
+            <input
+              type="text"
+              value={user.firstName + " " + user.lastName}
+              readOnly
+            />
+            <div className="stars add-reviews-star">
+              <Rating
+                onChange={(e) => setRatings(e.target.value)}
+                value={ratings}
+                size="large"
+              />
+            </div>
+            <textarea
+              value={comment}
+              placeholder="Comment..."
+              required
+              onChange={(e) => setComment(e.target.value)}
+            ></textarea>
+
+            {validationError ? (
+              <h4 className="validError">All Field Are Required..!!</h4>
+            ) : (
+              ""
+            )}
+
+            <button onClick={addReviewsHandel}>Submit</button>
+          </div>
+        </div>
+      )}
+
+      <Footer />
+    </>
+  );
+};
+
+export default AddReviews;
+
+// path :- frontend\src\Pages\Reviews\AllReviews.jsx
+
+import React from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useEffect } from "react";
+import { getAllReviewsAction } from "../../Redux/Actions/reviewsAction";
+import Loader from "../../Components/Loader/Loader";
+import Header from "../../Components/Header/Header";
+import Footer from "../../Components/Footer/Footer";
+import { RiEmotionHappyLine } from "react-icons/ri";
+import { Rating } from "@material-ui/lab";
+import NotFoundCart from "../../Components/NotFoundCart/NotFoundCart";
+
+const AllReviews = () => {
+  const dispatch = useDispatch();
+  const { reviews, loading, error } = useSelector(
+    (state) => state.getAllReviews
+  );
+
+  useEffect(() => {
+    document.title = `Customer Reviews`;
+    dispatch(getAllReviewsAction());
+  }, [dispatch]);
+
+  const options = {
+    size: "large",
+    value: reviews && reviews.ratings ? reviews.ratings : 0,
+    readOnly: true,
+    precision: 0.5,
+  };
+
+  return (
+    <>
+      <Header />
+      {loading ? (
+        <Loader LoadingName={"Getting Reviews"} />
+      ) : error ? (
+        "Error"
+      ) : (
+        <>
+          <div className="all-reviews-container">
+            <h1 className="Heading">
+              Customer <span>Reviews</span>
+            </h1>
+            {reviews.length === 0 ? (
+              <NotFoundCart msg={"No Reviews Yet"} />
+            ) : (
+              <div className="all-reviews-box">
+                {reviews &&
+                  reviews.map((review) => {
+                    return (
+                      <>
+                        <div className="all-review-cart">
+                          <i>
+                            <RiEmotionHappyLine />
+                          </i>
+                          <h5>
+                            {review.user.firstName + " " + review.user.lastName}
+                          </h5>
+                          <p>{review.comment}</p>
+                          <div className="all-reviews-stars">
+                            <Rating defaultValue={review.ratings} readOnly />
+                          </div>
+                        </div>
+                      </>
+                    );
+                  })}
+              </div>
+            )}
+          </div>
+          <Footer />
+        </>
+      )}
+    </>
+  );
+};
+
+export default AllReviews;
+
+// path :- frontend\src\Pages\SignUp\SignUp.jsx
+import React, { useState } from "react";
+import { Link, useNavigate } from "react-router-dom";
+import Footer from "../../Components/Footer/Footer";
+import Header from "../../Components/Header/Header";
+import {
+  MdClose,
+  MdOutlineMarkEmailRead,
+  MdVerifiedUser,
+} from "react-icons/md";
+import { useDispatch, useSelector } from "react-redux";
+import { RxLetterCaseCapitalize } from "react-icons/rx";
+import { GoHome } from "react-icons/go";
+import { VscEye, VscEyeClosed } from "react-icons/vsc";
+import { userRegisterAction, clearError } from "../../Redux/Actions/userAction";
+import { useRef } from "react";
+import { ImEnter } from "react-icons/im";
+import Loader from "../../Components/Loader/Loader";
+
+const SignUp = () => {
+  const dispatch = useDispatch();
+  const passwordToggle = useRef();
+  const RegisterSuccess = useRef();
+  const Navigate = useNavigate();
+  const { error, success, loading } = useSelector((state) => state.register);
+  const TogglePass = () => {
+    const filedType = passwordToggle.current.type;
+    passwordToggle.current.type =
+      filedType === "password" ? "text" : "password";
+  };
+  document.title = `Register User`;
+  const closeRegisterPop = () => {
+    RegisterSuccess.current.style.display = "none";
+  };
+
+  const HandelRegisterUser = (e) => {
+    e.preventDefault();
+
+    const firstName = e.target.firstName.value;
+    const lastName = e.target.lastName.value;
+    const email = e.target.email.value;
+    const password = e.target.password.value;
+    const confirmPassword = e.target.cPassword.value;
+
+    if (firstName && lastName && email && password && confirmPassword) {
+      const userData = {
+        firstName,
+        lastName,
+        email,
+        password,
+        confirmPassword,
+      };
+      dispatch(userRegisterAction(userData));
+    }
+  };
+
+  if (error) {
+    setTimeout(() => {
+      // console.log("Time Up");
+      dispatch(clearError());
+      // console.log(error);
+    }, 5000);
+  }
+
+  return (
+    <>
+      <Header />
+      {loading ? (
+        <Loader LoadingName={"Validating Data"} />
+      ) : (
+        <div className="login-container">
+          <h1 className="Heading regHeading">
+            User <span>Register</span>
+          </h1>
+          {success ? (
+            <div className="RegisterSuccess" ref={RegisterSuccess}>
+              <div className="pop-card">
+                <button id="close-btn" onClick={closeRegisterPop}>
+                  <MdClose />
+                </button>
+                <div className="successLoader">
+                  <h3 className="loader-text"></h3>
+                </div>
+                <h1>Register SuccessFully..!!</h1>
+                <button
+                  onClick={() => {
+                    Navigate("/Login");
+                  }}
+                >
+                  Login <ImEnter />
+                </button>
+              </div>
+            </div>
+          ) : (
+            ""
+          )}
+
+          <div className="box">
+            <div className="login-box">
+              <form onSubmit={(e) => HandelRegisterUser(e)}>
+                <div className="user-email">
+                  <RxLetterCaseCapitalize />
+                  <input
+                    type="text"
+                    placeholder="Name"
+                    name="firstName"
+                    required
+                    autoComplete="false"
+                  />
+                </div>
+                <div className="user-email">
+                  <GoHome />
+                  <input
+                    type="text"
+                    placeholder="Last Name"
+                    name="lastName"
+                    required
+                    autoComplete="false"
+                  />
+                </div>
+                <div className="user-email">
+                  <MdOutlineMarkEmailRead />
+                  <input
+                    type="email"
+                    placeholder="Email"
+                    name="email"
+                    required
+                  />
+                </div>
+                <div className="user-password">
+                  <VscEyeClosed />
+                  <input
+                    type="password"
+                    placeholder="Password"
+                    name="password"
+                    required
+                    ref={passwordToggle}
+                    autoComplete="false"
+                  />
+                  <i className="showPassword" onClick={TogglePass}>
+                    <VscEye />
+                  </i>
+                </div>
+                <div className="user-password">
+                  <MdVerifiedUser />
+                  <input
+                    type="text"
+                    placeholder="Confirm Password"
+                    name="cPassword"
+                    required
+                    autoComplete="false"
+                  />
+                </div>
+                {error ? (
+                  <div className="validError">
+                    {error.map((err) => {
+                      return (
+                        <>
+                          <span>{err}</span>
+                          <br />
+                        </>
+                      );
+                    })}
+                  </div>
+                ) : (
+                  ""
+                )}
+
+                <div
+                  className="user-links"
+                  style={{ justifyContent: "center" }}
+                >
+                  {/* <Link>Forget's Password</Link> */}
+                  <Link to="/Login">Already Register ? Login </Link>
+                </div>
+                <button>Register</button>
+              </form>
+            </div>
+          </div>
+        </div>
+      )}
+      <Footer />
+    </>
+  );
+};
+
+export default SignUp;
+
+// path :- frontend\src\Pages\ForgetPassword.jsx
+import React, { useEffect, useRef } from "react";
+import Footer from "../Components/Footer/Footer";
+import Header from "../Components/Header/Header";
+import { MdOutlineMarkEmailRead, MdClose } from "react-icons/md";
+import { useState } from "react";
+import {
+  clearError,
+  restPasswordSendEmailAction,
+} from "../Redux/Actions/userAction";
+import { useDispatch, useSelector } from "react-redux";
+import { TbMessageShare } from "react-icons/tb";
+import Loader from "../Components/Loader/Loader";
+
+const ForgetPassword = () => {
+  const dispatch = useDispatch();
+  const RegisterSuccess = useRef();
+
+  const [email, setEmail] = useState("");
+  const handelSendEmail = (e) => {
+    e.preventDefault();
+    if (email) {
+      dispatch(restPasswordSendEmailAction(email));
+    }
+  };
+  const closeRegisterPop = () => {
+    RegisterSuccess.current.style.display = "none";
+  };
+
+  const { success, message, error, loading } = useSelector(
+    (state) => state.sendRestPassMail
+  );
+
+  useEffect(() => {
+    document.title = `Forget Password`;
+    if (error) {
+      setTimeout(() => {
+        dispatch(clearError());
+      }, 5000);
+    }
+    if (success) {
+      RegisterSuccess.current.style.display = "block";
+    }
+  }, [error, message, success]);
+
+  return (
+    <>
+      <Header />
+
+      {loading ? <Loader LoadingName={"Processing Data"} /> : ""}
+      <div className="forget-password-container">
+        <h1 className="Heading">
+          Forget <span>Password</span>
+        </h1>
+        {success ? (
+          <div className="RegisterSuccess" ref={RegisterSuccess}>
+            <div className="pop-card">
+              <button id="close-btn" onClick={closeRegisterPop}>
+                <MdClose />
+              </button>
+              <div className="successLoader">
+                <h3 className="loader-text"></h3>
+              </div>
+              <h1>{message}</h1>
+              <a href="https://mail.google.com/mail/#inbox" target="_blank">
+                <button>
+                  Check Email <TbMessageShare />
+                </button>
+              </a>
+            </div>
+          </div>
+        ) : (
+          ""
+        )}
+
+        <div className="box">
+          <div className="login-box">
+            <form onSubmit={(e) => handelSendEmail(e)}>
+              <div className="user-email">
+                <MdOutlineMarkEmailRead />
+                <input
+                  type="email"
+                  placeholder="Email"
+                  value={email}
+                  required
+                  onChange={(e) => setEmail(e.target.value)}
+                />
+              </div>
+              {error ? (
+                <div className="validError">
+                  {" "}
+                  <span>{error}</span>{" "}
+                </div>
+              ) : (
+                ""
+              )}
+              <button>Send Link</button>
+            </form>
+          </div>
+        </div>
+      </div>
+      <Footer />
+    </>
+  );
+};
+
+export default ForgetPassword;
+
+// path :- frontend\src\Pages\RestPassword.jsx
+
+import React, { useRef } from "react";
+import { useNavigate, useParams } from "react-router-dom";
+import Footer from "../Components/Footer/Footer";
+import Header from "../Components/Header/Header";
+import { MdVerifiedUser } from "react-icons/md";
+import { VscEye, VscEyeClosed } from "react-icons/vsc";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  userPasswordUpdateAction,
+  clearError,
+  loadUserAction,
+  logOutUserAction,
+  restPasswordAction,
+} from "../Redux/Actions/userAction";
+import { ImEnter } from "react-icons/im";
+import { useEffect } from "react";
+import Loader from "../Components/Loader/Loader";
+
+const RestPassword = () => {
+  const RegisterSuccess = useRef();
+  const Navigate = useNavigate();
+  const dispatch = useDispatch();
+  const { id, token } = useParams();
+  const TogglePass = (fieldName) => {
+    const targetField = document.getElementById(fieldName);
+    targetField.type = targetField.type === "password" ? "text" : "password";
+  };
+
+  const handelPasswordResetSubmit = (e) => {
+    e.preventDefault();
+
+    const password = document.getElementById("newPassword").value;
+    const confirm_password = document.getElementById("confirm_password").value;
+    dispatch(restPasswordAction(id, token, password, confirm_password));
+  };
+
+  const { loading, error, message, success } = useSelector(
+    (state) => state.passwordReset
+  );
+
+  const closeRegisterPop = () => {
+    RegisterSuccess.current.style.display = "none";
+  };
+
+  useEffect(() => {
+    document.title = `Reset Password`;
+    if (success) {
+      RegisterSuccess.current.style.display = "block";
+    }
+  }, [success]);
+
+  if (error) {
+    setTimeout(() => {
+      // console.log("Time Up");
+      dispatch(clearError());
+    }, 5000);
+  }
+
+  return (
+    <>
+      <Header />
+      {loading ? <Loader LoadingName={"Processing Data"} /> : ""}
+      <div className="forget-password-container">
+        <h1 className="Heading">
+          Rest <span>Password</span>
+        </h1>
+        {success ? (
+          <div className="RegisterSuccess" ref={RegisterSuccess}>
+            <div className="pop-card">
+              <div className="successLoader">
+                <h3 className="loader-text"></h3>
+              </div>
+              <h1>{message}</h1>
+              <button
+                onClick={() => {
+                  Navigate("/Login");
+                }}
+              >
+                Login <ImEnter />
+              </button>
+            </div>
+          </div>
+        ) : (
+          ""
+        )}
+
+        <div className="box">
+          <div className="login-box">
+            <form onSubmit={handelPasswordResetSubmit}>
+              <div className="user-password">
+                <VscEyeClosed />
+                <input
+                  type="password"
+                  placeholder="New Password"
+                  required
+                  id="newPassword"
+                />
+                <i
+                  className="showPassword"
+                  onClick={() => {
+                    TogglePass("newPassword");
+                  }}
+                >
+                  <VscEye />
+                </i>
+              </div>
+              <div className="user-password">
+                <MdVerifiedUser />
+                <input
+                  type="text"
+                  placeholder="Confirm Password"
+                  id="confirm_password"
+                  required
+                />
+                {error ? (
+                  <div className="validError">
+                    {" "}
+                    <span>{error}</span>{" "}
+                  </div>
+                ) : (
+                  ""
+                )}
+              </div>
+              <div className="user-links"></div>
+              <button>Rest Password</button>
+            </form>
+          </div>
+        </div>
+      </div>
+      <Footer />
+    </>
+  );
+};
+
+export default RestPassword;
+
+// path :- frontend\src\Pages\UpdatePassword.jsx
+
+import React, { useRef } from "react";
+import { useNavigate } from "react-router-dom";
+import Footer from "../Components/Footer/Footer";
+import Header from "../Components/Header/Header";
+import { MdClose, MdVerifiedUser } from "react-icons/md";
+import { VscEye, VscEyeClosed } from "react-icons/vsc";
+import { useDispatch, useSelector } from "react-redux";
+import {
+  userPasswordUpdateAction,
+  clearError,
+  loadUserAction,
+  logOutUserAction,
+} from "../Redux/Actions/userAction";
+import { ImEnter } from "react-icons/im";
+import { useEffect } from "react";
+import { addToCartAction } from "../Redux/Actions/cartAction";
+import { CLEAR_CART_ITEM } from "../Redux/Constants/cartConstants";
+import Loader from "../Components/Loader/Loader";
+
+const UpdatePassword = () => {
+  const RegisterSuccess = useRef();
+  const Navigate = useNavigate();
+  const dispatch = useDispatch();
+
+  const TogglePass = (fieldName) => {
+    const targetField = document.getElementById(fieldName);
+    targetField.type = targetField.type === "password" ? "text" : "password";
+  };
+
+  const handelPasswordResetSubmit = (e) => {
+    e.preventDefault();
+    const confirm_password = document.getElementById("confirm_password").value;
+    const newPassword = document.getElementById("newPassword").value;
+    const userData = {
+      password: newPassword,
+      confirm_password,
+    };
+    dispatch(userPasswordUpdateAction(userData));
+  };
+
+  const { loading, error, message, success } = useSelector(
+    (state) => state.passwordUpdate
+  );
+  const closeRegisterPop = () => {
+    RegisterSuccess.current.style.display = "none";
+  };
+
+  useEffect(() => {
+    document.title = `Update Password`;
+    if (success) {
+      RegisterSuccess.current.style.display = "block";
+      dispatch(logOutUserAction());
+    }
+  }, [success]);
+
+  if (error) {
+    setTimeout(() => {
+      // console.log("Time Up");
+      dispatch(clearError());
+    }, 5000);
+  }
+
+  return (
+    <>
+      <Header />
+      {loading ? <Loader LoadingName={"Updating Password"} /> : ""}
+      <div className="login-container">
+        <h1 className="Heading regHeading">
+          Update <span>Password</span>
+        </h1>
+        {success ? (
+          <div className="RegisterSuccess" ref={RegisterSuccess}>
+            <div className="pop-card">
+              <button id="close-btn" onClick={closeRegisterPop}>
+                <MdClose />
+              </button>
+              <div className="successLoader">
+                <h3 className="loader-text"></h3>
+              </div>
+              <h1>Password Updated..!!</h1>
+              <button onClick={() => Navigate("/Login")}>Login</button>
+            </div>
+          </div>
+        ) : (
+          ""
+        )}
+        <div className="box">
+          <div className="login-box">
+            <form onSubmit={handelPasswordResetSubmit}>
+              <div className="user-password">
+                <VscEyeClosed />
+                <input
+                  type="password"
+                  placeholder="New Password"
+                  required
+                  id="newPassword"
+                />
+                <i
+                  className="showPassword"
+                  onClick={() => {
+                    TogglePass("newPassword");
+                  }}
+                >
+                  <VscEye />
+                </i>
+              </div>
+              <div className="user-password">
+                <MdVerifiedUser />
+                <input
+                  type="text"
+                  placeholder="Confirm Password"
+                  id="confirm_password"
+                  required
+                />
+                {error ? (
+                  <div className="validError">
+                    {" "}
+                    <span>{error}</span>{" "}
+                  </div>
+                ) : (
+                  ""
+                )}
+              </div>
+              <div className="user-links"></div>
+              <button>Update Password</button>
+            </form>
+          </div>
+        </div>
+      </div>
+      <Footer />
+    </>
+  );
+};
+
+export default UpdatePassword;
+

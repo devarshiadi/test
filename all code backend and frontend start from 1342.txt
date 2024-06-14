@@ -1,0 +1,1340 @@
+here's the all attached file  backend
+index.js
+// Load environment variables
+if (process.env.NODE_ENV !== "PRODUCTION") {
+  require("dotenv").config({ path: "backend/.env" });
+}
+
+// Import required modules
+const cloudinary = require("cloudinary");
+const expressFileUpload = require("express-fileupload");
+const express = require("express");
+const app = express();
+const path = require("path");
+const bodyParser = require("body-parser");
+const cookieParser = require("cookie-parser");
+const connectDB = require("./Config/connection");
+const userRoutes = require("./routes/userRoute");
+const productRoute = require("./routes/productRoute");
+const categoryRoute = require("./routes/categoryRoute");
+
+// Set up middlewares
+app.use(bodyParser.urlencoded({ limit: "200mb", extended: true }));
+app.use(cookieParser());
+app.use(express.json());
+app.use(expressFileUpload());
+
+// Set up Cloudinary
+cloudinary.config({
+  cloud_name: process.env.CLOUD_NAME,
+  api_key: process.env.CLOUD_API_KEY,
+  api_secret: process.env.CLOUD_API_SECRET_KEY,
+});
+
+// Connect to the database
+connectDB();
+
+// Set up routes
+app.use("/api/user", userRoutes);
+app.use("/api/product", productRoute);
+app.use("/api/category", categoryRoute);
+
+// Serve frontend static files
+app.use(express.static(path.join(__dirname, "./build21")));
+
+// Catch-all route for frontend
+app.get("/*", (req, res) => {
+  res.sendFile(path.resolve(__dirname, "./build21/index.html"));
+});
+
+// Start the server
+const port = process.env.PORT || 4000;
+app.listen(port, () => {
+  console.log(`Server Running At http://localhost:${port}`);
+});
+
+
+
+// path :-  backend\config\connection.js
+
+const mongoose = require("mongoose");
+
+const connectDB = async () => {
+  try {
+    mongoose.set("strictQuery", true);
+    await mongoose.connect(process.env.URI);
+    console.log("App Is Connected To Database Successfully...!!");
+  } catch (error) {
+    console.log(error);
+  }
+};
+
+module.exports = connectDB;
+
+
+// path :- backend\controllers\categoryController.js
+
+const categoryModel = require("../models/categoryModel");
+const coludinary = require("cloudinary");
+const sendError = require("../utils/sendError");
+
+//Add Category
+const addCategory = async (req, res) => {
+  try {
+    const { categoryName, categoryImage } = req.body;
+
+    const isCategoryExist = await categoryModel.findOne({
+      categoryName: categoryName,
+    });
+    if (isCategoryExist) {
+      sendError(res, 400, "Category Already Exist..!!");
+    } else {
+      const result = await coludinary.v2.uploader.upload(categoryImage, {
+        folder: "category",
+      });
+      const newCategory = await categoryModel.create({
+        categoryName,
+        categoryImage: result.url,
+      });
+      res.status(201).json({
+        success: true,
+        message: "Category Added..!!",
+        newCategory,
+      });
+    }
+  } catch (error) {
+    sendError(res, 400, error.message);
+  }
+};
+
+//get all categories
+const getAllCategories = async (req, res) => {
+  try {
+    const CategoriesCount = await categoryModel.find().countDocuments();
+    const Categories = await categoryModel.find();
+    if (Categories.length == 0) {
+      sendError(res, 400, "Categories Not Found..!!");
+    } else {
+      res.status(200).json({
+        success: true,
+        Categories,
+        CategoriesCount,
+        message: "Add Categories Get Successfully..!!",
+      });
+    }
+  } catch (error) {
+    sendError(res, 400, "Something Went To Wrong..!!");
+  }
+};
+
+//delete category
+const deleteCategory = async (req, res) => {
+  try {
+    const { categoryId } = req.params;
+    if (categoryId) {
+      const isCategoryExist = await categoryModel.findById(categoryId);
+      if (isCategoryExist) {
+        const DeletedCategory = await categoryModel.findByIdAndDelete(
+          categoryId
+        );
+        res.status(200).json({
+          success: true,
+          message: "Category Delete SuccessFully..!!",
+          DeletedCategory,
+        });
+      } else {
+        sendError(res, 400, "Category Not Found");
+      }
+    } else {
+      sendError(res, 400, "Category Id Not Found");
+    }
+  } catch (error) {
+    sendError(res, 400, "Something Went's Wrong..!!");
+  }
+};
+
+//Update Category
+const updateCategory = async (req, res) => {
+  try {
+    if (req.params.categoryId) {
+      const category = await categoryModel.findById(req.params.categoryId);
+      if (req.body.categoryImage !== "") {
+        const { categoryImage } = req.body;
+
+        const result = await coludinary.v2.uploader.upload(categoryImage, {
+          folder: "category",
+        });
+        category.categoryImage = result.url;
+        category.categoryName = req.body.categoryName;
+        await category.save();
+        res.status(200).json({
+          success: true,
+          message: "Category Updated..!!",
+        });
+      } else {
+        category.categoryName = req.body.categoryName;
+        await category.save();
+        res.status(200).json({
+          success: true,
+          message: "Category Updated..!!",
+        });
+      }
+    } else {
+      sendError("Category Id Required..!!");
+    }
+  } catch (error) {
+    console.log(error);
+    sendError(res, 400, "Somethings Went's To Wrong..!!");
+  }
+};
+
+module.exports = {
+  addCategory,
+  getAllCategories,
+  deleteCategory,
+  updateCategory,
+};
+
+
+// path :- backend\controllers\orderController.js
+
+const productModel = require("../models/productModel");
+const orderModel = require("../models/orderModel");
+const sendError = require("../utils/sendError");
+
+const newOrder = async (req, res) => {
+  try {
+    const { cartItems, shippingInfo, userId, total } = req.body;
+    const newOrder = await orderModel.create({
+      user: userId,
+      shippingInfo: shippingInfo,
+      total: total,
+    });
+    newOrder.orderItems = cartItems;
+    await updateStock(cartItems);
+    await newOrder.save();
+    res.status(200).json({
+      success: true,
+      newOrder,
+    });
+  } catch (error) {
+    res.status(400).json({
+      success: false,
+      error,
+    });
+  }
+};
+
+//update stock
+const updateStock = (cartItems) => {
+  cartItems.map(async (item) => {
+    const product = await productModel.findById(item.id);
+    product.stocks = product.stocks - item.quantity;
+    await product.save();
+  });
+};
+
+//Get Customer Orders
+const getMyOrders = async (req, res) => {
+  try {
+    const userId = req.user._id;
+    if (userId) {
+      const orders = await orderModel.find({ user: userId }).sort({ _id: -1 });
+      res.status(200).json({
+        success: true,
+        message: "Orders Get SuccessFully",
+        myOrders: orders,
+      });
+    } else {
+      sendError(res, 400, "Invalid User Id ");
+    }
+  } catch (error) {
+    sendError(res, 400, "Somethings Is Wrong..!!");
+  }
+};
+
+//Get Customer Order Details
+const getOrderDetails = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    if (orderId) {
+      const order = await orderModel.findById(orderId);
+      res.status(200).json({
+        success: true,
+        order,
+      });
+    } else {
+      sendError(res, 400, "Invalid OrderId..!!");
+    }
+  } catch (error) {
+    console.log(error.message);
+    sendError(res, 400, "Somethings Is Wrong..!!");
+  }
+};
+
+//get all orders admin
+const adminAllOrders = async (req, res) => {
+  try {
+    const OrdersCount = await orderModel.find().countDocuments();
+    const AllOrders = await orderModel
+      .find()
+      .sort({ _id: -1 })
+      .populate("user");
+    res.status(200).json({
+      success: true,
+      AllOrders,
+      OrdersCount,
+      message: "All Orders Get SuccessFully..!!",
+    });
+  } catch (error) {
+    console.log(error);
+    sendError(res, 400, "Somethings Went's Wrong..!!");
+  }
+};
+
+//Admin Update Order
+const AdminUpdateOrder = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    if (orderId) {
+      const updatedOrder = await orderModel.findById(orderId);
+      updatedOrder.status = req.body.oStatus;
+      await updatedOrder.save();
+      res.status(200).json({
+        success: true,
+        message: "Order Updated..!!",
+        updatedOrder,
+      });
+    } else {
+      sendError(res, 404, "Order Id Not Found");
+    }
+  } catch (error) {
+    console.log(error.message);
+    sendError(res, 400, "Somethings Went,s To Wrong..!!");
+  }
+};
+
+module.exports = {
+  newOrder,
+  getMyOrders,
+  getOrderDetails,
+  adminAllOrders,
+  AdminUpdateOrder,
+};
+
+// path :- backend\controllers\productController.js
+
+const productModel = require("../models/productModel");
+const coludinary = require("cloudinary");
+const sendError = require("../utils/sendError");
+const { filterData } = require("../utils/filterQuery");
+
+//Add Product
+const addProduct = async (req, res) => {
+  try {
+    const { name, rate, stocks, category, kilogramOption, image } = req.body;
+    if (kilogramOption.length == 1) {
+      sendError(res, 400, ["Weight: Required..!!"]);
+    } else {
+      const kgOption = [];
+      kilogramOption.map((kg) => {
+        kgOption.push(kg);
+      });
+
+      const result = await coludinary.v2.uploader.upload(image, {
+        folder: "products",
+      });
+
+      const newProduct = await productModel.create({
+        name,
+        rate,
+        stocks,
+        category,
+        kilogramOption: kgOption,
+        public_id: result.public_id,
+        url: result.url,
+      });
+
+      res.status(201).json({
+        success: true,
+        message: "Product Add SuccessFully..!!",
+        newProduct,
+      });
+    }
+  } catch (error) {
+    if (error.name === "ValidationError") {
+      const errors = {};
+      Object.keys(error.errors).map((key) => {
+        errors[key] = error.errors[key].message;
+      });
+      sendError(res, 400, Object.values(errors));
+    } else {
+      console.log(error);
+      sendError(res, 400, ["Somethings Went Wrong..!!"]);
+    }
+  }
+};
+
+//Delete Product
+const deleteProduct = async (req, res) => {
+  try {
+    const { productId } = req.params;
+
+    if (productId) {
+      const isProductExit = await productModel.findById(productId);
+      if (isProductExit) {
+        const DeletedProduct = await productModel
+          .findByIdAndDelete(productId)
+          .populate("category");
+        res.status(200).json({
+          success: true,
+          message: "Product Delete SuccessFully..!!",
+          DeletedProduct,
+        });
+      } else {
+        sendError(res, 400, "Product Not Found");
+      }
+    } else {
+      sendError(res, 400, "Product Id Not Found");
+    }
+  } catch (error) {
+    sendError(res, 400, error.message);
+  }
+};
+
+//Update Products
+const updateProduct = async (req, res) => {
+  try {
+    const { productId } = req.params;
+    const { name, rate, kilogramOption, category, stocks, image } = req.body;
+    if (productId) {
+      const isProductExit = await productModel.findById(productId);
+      if (image !== "") {
+        const result = await coludinary.v2.uploader.upload(image, {
+          folder: "products",
+        });
+        isProductExit.url = result.url;
+        isProductExit.public_id = result.public_id;
+        isProductExit.name = name;
+        isProductExit.rate = rate;
+        isProductExit.category = category;
+        isProductExit.stocks = stocks;
+        isProductExit.kilogramOption = kilogramOption;
+
+        await isProductExit.save();
+        res.status(200).json({
+          success: true,
+          message: "Product Updated..!!",
+        });
+      } else {
+        isProductExit.name = name;
+        isProductExit.rate = rate;
+        isProductExit.category = category;
+        isProductExit.stocks = stocks;
+        isProductExit.kilogramOption = kilogramOption;
+        await isProductExit.save();
+        res.status(200).json({
+          success: true,
+          message: "Product Updated..!!",
+        });
+      }
+    } else {
+      sendError(res, 400, "Product Id Not Found");
+    }
+  } catch (error) {
+    console.log(error);
+    sendError(res, 400, error.message);
+  }
+};
+
+//Retrieve All Products
+const getAllProduct = async (req, res) => {
+  try {
+    const productsDocCount = await productModel.find().countDocuments();
+    const queryStr = filterData(productModel.find(), req.query);
+    const products = await queryStr.populate("category");
+    res.status(200).json({
+      success: true,
+      message: "Product Retrieve SuccessFully..!!",
+      products,
+      productsDocCount,
+    });
+  } catch (error) {
+    console.log(error);
+    sendError(res, 400, error.message);
+  }
+};
+
+//Retrieve First Five Products
+const getRecentProducts = async (req, res) => {
+  try {
+    const products = await productModel.find().sort({ date: -1 }).limit(10);
+    res.status(200).json({
+      success: true,
+      products,
+    });
+  } catch (error) {
+    sendError(res, 400, "Something Is Wrong..!!");
+  }
+};
+
+//Retrieve Single Product
+const getSingleProduct = async (req, res) => {
+  try {
+    const { productId } = req.params;
+    if (productId) {
+      const product = await productModel
+        .findById(productId)
+        .populate("category");
+
+      if (product) {
+        res.status(200).json({
+          success: true,
+          message: "Product Retrieve SuccessFully..!!",
+          product,
+        });
+      } else {
+        sendError(res, 400, "Product Not Found..!!");
+      }
+    } else {
+      sendError(res, 400, "Product Id Not Found");
+    }
+  } catch (error) {
+    console.log(error.message);
+    sendError(res, 400, "Somethings Is Wrong..!!");
+  }
+};
+
+module.exports = {
+  addProduct,
+  deleteProduct,
+  updateProduct,
+  getAllProduct,
+  getRecentProducts,
+  getSingleProduct,
+};
+
+
+
+// path :- backend\controllers\reviewsController.js
+
+const reviewsModel = require("../models/reviewsModel");
+const sendError = require("../utils/sendError");
+
+const addReviews = async (req, res) => {
+  try {
+    const { comment, ratings } = req.body;
+    const isReviewsExist = await reviewsModel.findOne({ user: req.user._id });
+    if (isReviewsExist) {
+      isReviewsExist.comment = comment;
+      isReviewsExist.ratings = ratings;
+      isReviewsExist.save();
+      res.status(200).json({
+        success: true,
+        message: "Review Update..!!",
+      });
+    } else {
+      const newReviews = await reviewsModel.create({
+        user: req.user._id,
+        comment,
+        ratings,
+      });
+      res.status(201).json({
+        success: true,
+        message: "Review Added..!!",
+      });
+    }
+  } catch (error) {
+    console.log(error.message);
+    sendError(res, 400, "Somethings Went To Wrong..!!");
+  }
+};
+
+//get All Reviews fro client
+const getAllReviews = async (req, res) => {
+  try {
+    const reviews = await reviewsModel
+      .find({ ratings: { $gte: 3 } })
+      .sort({ _id: -1 })
+      .populate("user");
+    res.status(200).json({
+      success: true,
+      reviews,
+    });
+  } catch (error) {
+    sendError(res, 400, "Somethings Went To Wrong..!!");
+  }
+};
+
+//get all reviews fro admin
+const AdminGetAllReviews = async (req, res) => {
+  try {
+    const reviews = await reviewsModel
+      .find()
+      .sort({ _id: -1 })
+      .populate("user");
+    res.status(200).json({
+      success: true,
+      reviews,
+    });
+  } catch (error) {
+    sendError(res, 400, "Somethings Went To Wrong..!!");
+  }
+};
+
+//Delete Product
+const deleteReview = async (req, res) => {
+  try {
+    const { reviewId } = req.params;
+    if (reviewId) {
+      const review = await reviewsModel.findById(reviewId);
+      if (review) {
+        const deletedReview = await reviewsModel.findByIdAndDelete(reviewId);
+        res.status(200).json({
+          success: true,
+          message: "Review Delete SuccessFully..!!",
+        });
+      } else {
+        sendError(res, 400, "Review Not Found");
+      }
+    } else {
+      sendError(res, 400, "Review Id Not Found");
+    }
+  } catch (error) {
+    console.log(error.message);
+    sendError(res, 400, "Somethings Went's Wrong..!!");
+  }
+};
+
+module.exports = {
+  addReviews,
+  getAllReviews,
+  getAllReviews,
+  deleteReview,
+  AdminGetAllReviews,
+};
+
+
+// path :- backend\controllers\userController.js
+
+const userModel = require("../models/userModel");
+const bcrypt = require("bcrypt");
+const jwt = require("jsonwebtoken");
+const nodemailer = require("nodemailer");
+const sendError = require("../utils/sendError");
+const { sendToken, sendCookie } = require("../utils/sendToken");
+
+//User Register
+const userRegister = async (req, res) => {
+  try {
+    const { firstName, lastName, email, password, confirmPassword } = req.body;
+    const isUserExit = await userModel.findOne({ email: email });
+    if (isUserExit) {
+      res.status(400).json({
+        success: false,
+        message: ["Oops! Email Already Exit..!!"],
+      });
+    } else {
+      if (password == confirmPassword) {
+        const NewUser = await userModel.create({
+          firstName,
+          lastName,
+          email,
+          password,
+        });
+        const salt = await bcrypt.genSalt(10);
+        NewUser.password = await bcrypt.hash(NewUser.password, salt);
+        await NewUser.save();
+        res.status(201).json({
+          success: true,
+          message: "User Register SuccessFully..!!",
+          NewUser,
+        });
+      } else {
+        sendError(res, 400, ["Passwords Field Mismatch"]);
+      }
+    }
+  } catch (error) {
+    if (error.name === "ValidationError") {
+      const errors = {};
+      Object.keys(error.errors).map((key) => {
+        errors[key] = error.errors[key].message;
+      });
+      sendError(res, 400, Object.values(errors));
+    } else {
+      sendError(res, 400, ["Somethings Went Wrong..!!"]);
+    }
+  }
+};
+
+//User Login
+const userLogin = async (req, res) => {
+  try {
+    const { email, password } = req.body;
+    if (email && password) {
+      const isUserExit = await userModel.findOne({ email: email });
+      if (isUserExit) {
+        const isPassMatch = await bcrypt.compare(password, isUserExit.password);
+        if (isUserExit.email && isPassMatch) {
+          const token = await sendToken(isUserExit._id);
+          await sendCookie(
+            res,
+            200,
+            token,
+            isUserExit,
+            "User Login SuccessFully..!!"
+          );
+        } else {
+          sendError(res, 400, "Invalid Email & Password");
+        }
+      } else {
+        sendError(res, 400, "Invalid Email & Password");
+      }
+    } else {
+      sendError(res, 400, "Invalid Email & Password");
+    }
+  } catch (error) {
+    sendError(res, 400, error.message);
+  }
+};
+
+//Change User Password
+const changeUserPassword = async (req, res) => {
+  try {
+    const { password, confirm_password } = req.body;
+    if (password && confirm_password) {
+      if (password === confirm_password) {
+        if (password.length >= 4) {
+          const salt = await bcrypt.genSalt(10);
+          const newHashPassword = await bcrypt.hash(password, salt);
+          const user = await userModel.findById(req.user._id);
+          user.password = newHashPassword;
+          await user.save();
+          res.status(201).json({
+            success: true,
+            message: "Password Updated..!!",
+          });
+        } else {
+          sendError(res, 400, "Password: Minimum Four Character");
+        }
+      } else {
+        sendError(res, 400, "Passwords Field Mismatch");
+      }
+    } else {
+      sendError(res, 400, "All Field Required");
+    }
+  } catch (error) {
+    console.log(error);
+    sendError(res, 400, error.message);
+  }
+};
+
+//Get Logged User Data
+const getLoggedUser = async (req, res) => {
+  res.status(200).json({
+    success: true,
+    user: req.user,
+  });
+};
+
+//Send Password Reset Email To User
+const sendUserPasswordResetEmail = async (req, res) => {
+  try {
+    const { email } = req.body;
+    if (email) {
+      const isUserExit = await userModel.findOne({ email: email });
+      if (isUserExit) {
+        const token = jwt.sign(
+          { userId: isUserExit._id },
+          process.env.JWT_RESET_PASSWORD_SECRET_KEY,
+          {
+            expiresIn: "5m",
+          }
+        );
+        //Send Password Reset Mail
+        const transporter = nodemailer.createTransport({
+          service: "gmail",
+          auth: {
+            user: process.env.SMPT_MAIL,
+            pass: process.env.SMPT_PASSWORD,
+          },
+        });
+        const link = `${req.protocol}://${req.get("host")}/reset-password/${
+          isUserExit._id
+        }/${token}`;
+        await transporter.sendMail({
+          from: process.env.SMPT_MAIL,
+          to: isUserExit.email,
+          subject: "E-SHOP - Password Reset Link",
+          html: `<h2>Hello ${isUserExit.firstName}</h2><br>
+            <center>
+            <h5>Your Password Reset Link is <a href=${link}>Click Here To Reset Password</a> </h5>
+            </center>     `,
+        });
+        res.status(200).json({
+          success: true,
+          message: `Password Reset Link Send To ${isUserExit.email}`,
+        });
+      } else {
+        sendError(res, 400, "User Not Exit");
+      }
+    } else {
+      sendError(res, 400, "Email Field Is Required..!!");
+    }
+  } catch (error) {
+    sendError(res, 400, "Please Enter Email");
+  }
+};
+
+//Password Reset
+const userPasswordReset = async (req, res) => {
+  try {
+    const { password, confirm_password } = req.body;
+    const { id, token } = req.params;
+    await jwt.verify(token, process.env.JWT_RESET_PASSWORD_SECRET_KEY);
+    if (password && confirm_password) {
+      if (password === confirm_password) {
+        if (password.length >= 4) {
+          const user = await userModel.findById(id);
+          const salt = await bcrypt.genSalt(10);
+          user.password = await bcrypt.hash(password, salt);
+          await user.save();
+          res.status(200).json({
+            success: true,
+            message: "Password Reset SuccessFully..!!",
+          });
+        } else {
+          sendError(res, 400, "Password: Minimum Four Character");
+        }
+      } else {
+        sendError(res, 400, "Both Password Field Not Match..!!");
+      }
+    } else {
+      sendError(res, 400, "All Field Are Required..!!");
+    }
+  } catch (error) {
+    if (error.message == "jwt expired") {
+      sendError(res, 400, "Invalid Token Or Expired");
+    } else {
+      sendError(res, 400, "Something Went To Wrong..!!");
+    }
+  }
+};
+
+const loggedOutUser = (req, res) => {
+  res.cookie("token", null, { expires: new Date(Date.now()), httpOnly: true });
+  res.status(200).json({
+    success: true,
+    message: "Logged Out Successfully..!!",
+  });
+};
+
+//get all orders admin
+const adminGetAllUsers = async (req, res) => {
+  try {
+    const userDocCount = await userModel.find().countDocuments();
+    const AllUsers = await userModel.find().sort({ _id: -1 });
+    res.status(200).json({
+      success: true,
+      AllUsers,
+      userDocCount,
+      message: "All Orders Get SuccessFully..!!",
+    });
+  } catch (error) {
+    console.log(error);
+    sendError(res, 400, "Somethings Went's Wrong..!!");
+  }
+};
+//Delete Product
+const AdminDeleteUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    console.log(req.params);
+    if (userId) {
+      const isUserExit = await userModel.findById(userId);
+      if (isUserExit) {
+        const DeletedUser = await userModel.findByIdAndDelete(userId);
+        res.status(200).json({
+          success: true,
+          message: "Product Delete SuccessFully..!!",
+          DeletedUser,
+        });
+      } else {
+        sendError(res, 400, "User Not Found");
+      }
+    } else {
+      sendError(res, 400, "User Id Not Found");
+    }
+  } catch (error) {
+    sendError(res, 400, "Somethings Is Wrong");
+  }
+};
+
+const adminUpdateUser = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    if (userId) {
+      const isUserExit = await userModel.findById(userId);
+      if (isUserExit) {
+        isUserExit.role = req.body.UserRole;
+        await isUserExit.save();
+        res.status(200).json({
+          success: true,
+          message: "User Role Updated..!!",
+          isUserExit,
+        });
+      } else {
+        sendError(res, 400, "User Not Found..!!");
+      }
+    } else {
+      sendError(res, 400, "User Not Found..!!");
+    }
+  } catch (error) {
+    console.log(error.message);
+    sendError(res, 400, "Somethings Went's Wrong..!!");
+  }
+};
+
+module.exports = {
+  userRegister,
+  userLogin,
+  changeUserPassword,
+  getLoggedUser,
+  sendUserPasswordResetEmail,
+  userPasswordReset,
+  loggedOutUser,
+  adminGetAllUsers,
+  AdminDeleteUser,
+  adminUpdateUser,
+};
+
+// path :- backend\middleware\isAuthorized.js
+
+
+const sendError = require("../utils/sendError");
+
+const isAuthorized = async (req, res, next) => {
+  if (req.user.role === "Admin") {
+    next();
+  } else {
+    sendError(res, 400, "Not Authorized User");
+  }
+};
+
+module.exports = isAuthorized;
+
+
+
+// path :- backend\middleware\isAuthorized.js
+
+const sendError = require("../utils/sendError");
+const jwt = require("jsonwebtoken");
+const userModel = require("../models/userModel");
+
+const isAuthUser = async (req, res, next) => {
+  try {
+    //Get Token From Cookies
+    if (req.cookies.token) {
+      //Verify Token
+      const { userId } = jwt.verify(
+        req.cookies.token,
+        process.env.JWT_SECRET_KEY
+      );
+      //Get User From Token
+      req.user = await userModel.findById(userId).select("-password");
+      next();
+    } else {
+      sendError(res, 400, "");
+    }
+  } catch (error) {
+    sendError(res, 400, "Token Not Found..!!");
+  }
+};
+
+module.exports = isAuthUser;
+
+
+// path :- backend\models\categoryModel.js
+const mongoose = require("mongoose");
+
+const categorySchema = new mongoose.Schema({
+  categoryName: {
+    type: String,
+    trim: true,
+    required: [true, "Enter Category Name"],
+  },
+  categoryImage: {
+    type: String,
+    trim: true,
+    required: [true, "Enter Category Name"],
+  },
+});
+
+const categoryModel = mongoose.model("Category", categorySchema);
+
+module.exports = categoryModel;
+
+
+// path :- backend\models\orderModel.js
+
+const mongoose = require("mongoose");
+
+const orderSchema = new mongoose.Schema({
+  user: {
+    type: mongoose.Types.ObjectId,
+    ref: "user",
+    required: true,
+  },
+  orderItems: [
+    {
+      name: { type: String, required: true },
+      quantity: { type: Number, required: true },
+      rate: { type: Number, required: true },
+      image: { type: String, required: true },
+    },
+  ],
+
+  total: {
+    type: Number,
+    required: true,
+  },
+  shippingInfo: {
+    address: { type: String, required: true },
+    city: { type: String, required: true },
+    mobileNumber: { type: Number, required: true, maxLength: 10 },
+    pinCode: { type: Number, required: true, maxLength: 6 },
+  },
+
+  status: {
+    type: String,
+    default: "Processing",
+  },
+
+  orderDate: {
+    type: String,
+    default: () =>
+      new Date().toLocaleDateString("en-us", {
+        year: "numeric",
+        month: "short",
+        day: "numeric",
+      }),
+  },
+});
+
+const orderModel = mongoose.model("orders", orderSchema);
+
+module.exports = orderModel;
+
+
+// path :- backend\models\productModel.js
+
+const mongoose = require("mongoose");
+const productSchema = new mongoose.Schema({
+  name: {
+    type: String,
+    required: [true, "Name: Required..!!"],
+    trim: true,
+  },
+  rate: {
+    type: Number,
+    required: [true, "Price: Required..!!"],
+    trim: true,
+  },
+  public_id: {
+    type: String,
+    required: true,
+  },
+  url: {
+    type: String,
+    required: true,
+  },
+
+  category: {
+    type: mongoose.Types.ObjectId,
+    ref: "Category",
+    required: [true, "Enter Category Name"],
+  },
+
+  stocks: {
+    type: Number,
+    required: [true, "Stock: Required..!!"],
+    trim: true,
+  },
+  kilogramOption: [
+    {
+      type: mongoose.Schema.Types.Decimal128,
+      required: [true, "KG: Required..!!"],
+      trim: true,
+      default: 0.5,
+    },
+  ],
+  numOfReviews: {
+    type: Number,
+    trim: true,
+    default: 0,
+  },
+  date: {
+    type: Date,
+    default: () => new Date(+new Date() + 7 * 24 * 60 * 60 * 1000),
+  },
+});
+
+const productModel = mongoose.model("products", productSchema);
+
+module.exports = productModel;
+
+
+// path :- backend\models\reviewsModel.js
+const mongoose = require("mongoose");
+
+const reviewsSchema = new mongoose.Schema({
+  user: {
+    required: true,
+    type: mongoose.Types.ObjectId,
+    ref: "user",
+  },
+  comment: {
+    type: String,
+    required: true,
+  },
+  ratings: {
+    type: Number,
+    required: true,
+  },
+});
+
+const reviewsModel = mongoose.model("reviews", reviewsSchema);
+
+module.exports = reviewsModel;
+
+
+
+// path :- backend\models\userModel.js
+
+const mongoose = require("mongoose");
+const validator = require("validators");
+
+const userSchema = new mongoose.Schema({
+  firstName: {
+    type: String,
+    required: [true, "Please Enter Your Name"],
+    trim: true,
+    minLength: [2, "Name : Minimum Two Character"],
+  },
+
+  lastName: {
+    type: String,
+    required: [true, "Please Enter Your Last Name"],
+    trim: true,
+  },
+
+  role: {
+    type: String,
+    default: "User",
+  },
+
+  email: {
+    type: String,
+    required: [true, "Please Enter Your Email"],
+    unique: true,
+  },
+
+  password: {
+    type: String,
+    required: [true, "Please Enter Your Password"],
+    trim: true,
+    minLength: [4, "Password : Minimum Four Character"],
+  },
+});
+
+const userModel = mongoose.model("user", userSchema);
+
+module.exports = userModel;
+
+// path :- backend\routes\categoryRoute.js
+
+const express = require("express");
+const {
+  addCategory,
+  getAllCategories,
+  deleteCategory,
+  updateCategory,
+} = require("../Controllers/categoryController");
+const route = express.Router();
+
+route.get("/get", getAllCategories);
+route.post("/add", addCategory);
+
+route.delete("/delete/:categoryId", deleteCategory);
+route.put("/update/:categoryId", updateCategory);
+
+module.exports = route;
+
+
+// path :- backend\routes\productRoute.js
+
+const express = require("express");
+const {
+  addProduct,
+  deleteProduct,
+  updateProduct,
+  getAllProduct,
+  getSingleProduct,
+  getRecentProducts,
+} = require("../Controllers/productController");
+const isAuthorized = require("../middleware/isAuthorized");
+const isAuthUser = require("../middleware/isAuthUser");
+const route = express.Router();
+
+route.post("/add", isAuthUser, isAuthorized, addProduct);
+route.get("/getAllProducts", getAllProduct);
+route.get("/recent/products", getRecentProducts);
+route.get("/getSingleProduct/:productId", getSingleProduct);
+route.put("/update/:productId", isAuthUser, isAuthorized, updateProduct);
+route.delete("/delete/:productId", isAuthUser, isAuthorized, deleteProduct);
+
+module.exports = route;
+
+
+// path :- backend\routes\userRoute.js
+
+const express = require("express");
+const {
+  newOrder,
+  getMyOrders,
+  getOrderDetails,
+  adminAllOrders,
+  AdminUpdateOrder,
+} = require("../Controllers/orderController");
+const {
+  addReviews,
+  getAllReviews,
+  AdminGetAllReviews,
+  deleteReview,
+} = require("../Controllers/reviewsController");
+const route = express.Router();
+const {
+  userRegister,
+  userLogin,
+  changeUserPassword,
+  getLoggedUser,
+  sendUserPasswordResetEmail,
+  userPasswordReset,
+  loggedOutUser,
+  adminGetAllUsers,
+  AdminDeleteUser,
+  adminUpdateUser,
+} = require("../Controllers/userController");
+const isAuthorized = require("../middleware/isAuthorized");
+const isAuthUser = require("../middleware/isAuthUser");
+
+//Public Route
+route.post("/register", userRegister);
+route.post("/login", userLogin);
+route.post("/send-reset-password-email", sendUserPasswordResetEmail);
+route.post("/reset-password/:id/:token", userPasswordReset);
+
+route.put("/changePassword", isAuthUser, changeUserPassword);
+route.get("/getloggeduser", isAuthUser, getLoggedUser);
+route.get("/logOut", isAuthUser, loggedOutUser);
+
+route.post("/new/order", isAuthUser, newOrder);
+route.get("/my/orders", isAuthUser, getMyOrders);
+route.get("/my/order/:orderId", isAuthUser, getOrderDetails);
+
+route.post("/add/review", isAuthUser, addReviews);
+route.get("/get/reviews", getAllReviews);
+
+//Admin Route
+route.get("/admin/orders", isAuthUser, isAuthorized, adminAllOrders);
+route.put("/update/order/:orderId", isAuthUser, isAuthorized, AdminUpdateOrder);
+route.get("/admin/user", isAuthUser, isAuthorized, adminGetAllUsers);
+route.delete("/admin/user/:userId", isAuthUser, isAuthorized, AdminDeleteUser);
+route.put("/admin/user/:userId", isAuthUser, isAuthorized, adminUpdateUser);
+route.get("/get/admin/reviews", isAuthUser, isAuthorized, AdminGetAllReviews);
+route.delete("/admin/review/:reviewId", isAuthUser, isAuthorized, deleteReview);
+
+module.exports = route;
+
+
+// path :- backend\utils\filterQuery.js
+
+const filterData = (queryStr, filterParameter) => {
+    const { lte, gte } = filterParameter;
+    // console.log(filterParameter);
+  
+    //This Condition Only For Price Filter
+    if (filterParameter.category === "" && lte && gte) {
+      // console.log("Price Run");
+      return queryStr.find({
+        $and: [{ rate: { $gte: gte } }, { rate: { $lte: lte } }],
+      });
+    }
+  
+    //This Condition For Price And Category Filter
+    else if (filterParameter.category !== "" && lte && gte) {
+      const categories = filterParameter.category.split(",");
+      // console.log("Price And Category Run", categories, gte, lte);
+      return queryStr.find({
+        $and: [
+          { rate: { $gte: gte } },
+          { rate: { $lte: lte } },
+          { category: { $in: categories } },
+        ],
+      });
+    }
+    //This Condition For Keyword Search
+    else if (filterParameter.keyword != undefined) {
+      return queryStr.find({
+        name: { $regex: filterParameter.keyword, $options: "i" },
+      });
+    } else {
+      return queryStr;
+    }
+  };
+  
+  module.exports = { filterData };
+  
+
+// path :- backend\utils\sendError.js
+
+const sendError = (res, statusCode, message) => {
+    return res.status(statusCode).json({
+      success: false,
+      message: message,
+    });
+  };
+  
+  module.exports = sendError;
+  
+
+// path :- backend\utils\sendToken.js
+
+const jwt = require("jsonwebtoken");
+
+const sendToken = async (userId) => {
+  return await jwt.sign({ userId: userId }, process.env.JWT_SECRET_KEY, {
+    expiresIn: `5d`,
+  });
+};
+
+const sendCookie = async (res, statusCode, token, user, message) => {
+  const options = {
+    expires: new Date(
+      Date.now() + process.env.COOKIE_EXPIRE * 24 * 60 * 60 * 1000
+    ),
+    httpOnly: true,
+  };
+  res.cookie("token", token, options);
+  res.status(statusCode).json({
+    success: true,
+    message,
+    user,
+    token,
+  });
+};
+
+module.exports = { sendToken, sendCookie };
+
+
+
